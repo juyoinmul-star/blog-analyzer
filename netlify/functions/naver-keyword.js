@@ -7,13 +7,17 @@ function makeSignature(secretKey, timestamp, method, path) {
   return hmac.digest('base64');
 }
 
-function doRequest(hostname, path, apiKey, secretKey, customerId) {
+function doRequest(hostname, fullPath, apiKey, secretKey, customerId, redirectCount) {
+  if ((redirectCount || 0) > 5) return Promise.reject(new Error('Too many redirects'));
+
+  // 서명은 항상 /keywordstool 기준
   const timestamp = Date.now().toString();
   const signature = makeSignature(secretKey, timestamp, 'GET', '/keywordstool');
+
   return new Promise((resolve, reject) => {
     const req = https.request({
       hostname,
-      path,
+      path: fullPath,
       method: 'GET',
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
@@ -23,11 +27,16 @@ function doRequest(hostname, path, apiKey, secretKey, customerId) {
         'X-Signature': signature,
       },
     }, (res) => {
-      // 308/301/302 리다이렉트 처리
       if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location) {
         const loc = res.headers.location;
-        const url = new URL(loc.startsWith('http') ? loc : `https://${hostname}${loc}`);
-        return doRequest(url.hostname, url.pathname + url.search, apiKey, secretKey, customerId)
+        let newHostname = hostname;
+        let newPath = loc;
+        if (loc.startsWith('http')) {
+          const url = new URL(loc);
+          newHostname = url.hostname;
+          newPath = url.pathname + url.search;
+        }
+        return doRequest(newHostname, newPath, apiKey, secretKey, customerId, (redirectCount || 0) + 1)
           .then(resolve).catch(reject);
       }
       let data = '';
@@ -57,7 +66,7 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: '파라미터 누락' }) };
 
     const path = `/keywordstool?hintKeywords=${encodeURIComponent(keyword)}&showDetail=1`;
-    const result = await doRequest('api.naver.com', path, apiKey, secretKey, customerId);
+    const result = await doRequest('api.naver.com', path, apiKey, secretKey, customerId, 0);
 
     const items = (result.body && result.body.keywordList) || [];
     const main = items.find(k => k.relKeyword === keyword) || items[0] || {};
@@ -91,7 +100,7 @@ exports.handler = async (event) => {
           pcVol: toNum(k.monthlyPcQcCnt),
           mobileVol: toNum(k.monthlyMobileQcCnt),
         })),
-        _debug: { status: result.status, itemCount: items.length, raw: result.raw }
+        _debug: { status: result.status, itemCount: items.length, body: result.body, raw: result.raw }
       })
     };
   } catch(err) {
