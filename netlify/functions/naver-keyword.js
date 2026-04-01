@@ -1,34 +1,35 @@
 const https = require('https');
 const crypto = require('crypto');
 
-// 네이버 검색광고 API 서명 생성
 function makeSignature(timestamp, method, path, secretKey) {
   const message = `${timestamp}.${method}.${path}`;
   return crypto.createHmac('sha256', secretKey).update(message).digest('base64');
 }
 
-function naverRequest(path, apiKey, secretKey, customerId) {
+function naverRequest(fullPath, apiKey, secretKey, customerId) {
   return new Promise((resolve, reject) => {
     const timestamp = Date.now().toString();
-    const signature = makeSignature(timestamp, 'GET', path, secretKey);
+    // 서명은 쿼리스트링 제외한 path만
+    const pathOnly = fullPath.split('?')[0];
+    const signature = makeSignature(timestamp, 'GET', pathOnly, secretKey);
     const options = {
       hostname: 'api.naver.com',
-      path,
+      path: fullPath,
       method: 'GET',
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'X-Timestamp': timestamp,
         'X-API-KEY': apiKey,
-        'X-Customer': customerId,
+        'X-Customer': String(customerId),
         'X-Signature': signature,
       },
     };
     const req = https.request(options, (res) => {
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
         try { resolve(JSON.parse(data)); }
-        catch (e) { resolve({ error: data }); }
+        catch(e) { resolve({ _raw: data, _status: res.statusCode }); }
       });
     });
     req.on('error', reject);
@@ -40,77 +41,57 @@ exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json',
   };
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
-  }
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
   try {
     const { keyword, apiKey, secretKey, customerId } = JSON.parse(event.body || '{}');
-    if (!keyword || !apiKey || !secretKey || !customerId) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: '필수 파라미터 누락' }) };
-    }
+    if (!keyword || !apiKey || !secretKey || !customerId)
+      return { statusCode: 400, headers, body: JSON.stringify({ error: '파라미터 누락' }) };
 
     const encoded = encodeURIComponent(keyword);
-
-    // 1. 키워드 기본 정보 (월 검색량, 경쟁도, CPC 등)
-    const kwPath = `/keywordstool?hintKeywords=${encoded}&showDetail=1`;
-    const kwData = await naverRequest(kwPath, apiKey, secretKey, customerId);
-
-    // 2. 월별 트렌드 (최근 12개월)
-    const trendPath = `/keywordstool?hintKeywords=${encoded}&includeHintKeywords=1`;
-    const trendData = await naverRequest(trendPath, apiKey, secretKey, customerId);
-
-    // 결과 가공
-    const items = kwData.keywordList || [];
-    const mainKw = items.find(k => k.relKeyword === keyword) || items[0] || {};
-    const relKws = items.filter(k => k.relKeyword !== keyword).slice(0, 20);
-
-    // 경쟁도 계산
-    const pcSearch = parseInt(mainKw.monthlyPcQcCnt) || 0;
-    const mobileSearch = parseInt(mainKw.monthlyMobileQcCnt) || 0;
-    const totalSearch = pcSearch + mobileSearch;
-    const competition = mainKw.compIdx || 'medium';
-    const compMap = { low: '낮음', medium: '보통', high: '높음' };
-
-    // 포화도 계산 (검색량 대비 경쟁 지수)
-    const compScore = competition === 'low' ? 30 : competition === 'medium' ? 65 : 90;
-
-    // 트렌드 데이터 (12개월)
-    const trendItems = trendData.keywordList || [];
-    const mainTrend = trendItems.find(k => k.relKeyword === keyword) || {};
-    const monthlyTrends = mainTrend.monthlyQcCnts || [];
-    const trendArr = monthlyTrends.slice(-12).map(m =>
-      (parseInt(m.pcQcCnt) || 0) + (parseInt(m.mobileQcCnt) || 0)
+    const kwData = await naverRequest(
+      `/keywordstool?hintKeywords=${encoded}&showDetail=1&includeHintKeywords=1`,
+      apiKey, secretKey, customerId
     );
 
-    const result = {
-      keyword,
-      monthlyPc: pcSearch.toLocaleString(),
-      monthlyMobile: mobileSearch.toLocaleString(),
-      monthlyTotal: totalSearch.toLocaleString(),
-      competition: compMap[competition] || '보통',
-      competitionScore: compScore,
-      avgCpc: mainKw.plAvgDepth ? Math.round(mainKw.plAvgDepth).toLocaleString() + '원' : '—',
-      trendData: trendArr.length ? trendArr : null,
-      relatedKeywords: relKws.map(k => ({
-        word: k.relKeyword,
-        vol: ((parseInt(k.monthlyPcQcCnt) || 0) + (parseInt(k.monthlyMobileQcCnt) || 0)).toLocaleString(),
-        comp: compMap[k.compIdx] || '보통',
-        pcVol: parseInt(k.monthlyPcQcCnt) || 0,
-        mobileVol: parseInt(k.monthlyMobileQcCnt) || 0,
-      })),
-      raw: { mainKw, relCount: relKws.length },
-    };
+    // 오류 체크
+    if (kwData.title || kwData._status === 403 || kwData._status === 401) {
+      return { statusCode: 200, headers, body: JSON.stringify({ error: 'API 인증 실패', debug: kwData }) };
+    }
 
-    return { statusCode: 200, headers, body: JSON.stringify(result) };
-  } catch (err) {
+    const items = kwData.keywordList || [];
+    const mainKw = items.find(k => k.relKeyword === keyword) || items[0] || {};
+    const relKws = items.filter(k => k.relKeyword !== keyword);
+
+    const pc = v => { if(!v) return 0; const n=parseInt(String(v).replace(/[<,\s]/g,'')); return isNaN(n)?0:n; };
+
+    const pcS = pc(mainKw.monthlyPcQcCnt);
+    const mobS = pc(mainKw.monthlyMobileQcCnt);
+    const ci = mainKw.compIdx || '';
+    const ciMap = { '낮음':'낮음', '보통':'보통', '높음':'높음', low:'낮음', medium:'보통', high:'높음' };
+
     return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: err.message }),
+      statusCode: 200, headers,
+      body: JSON.stringify({
+        keyword,
+        monthlyPc: pcS.toLocaleString('ko-KR'),
+        monthlyMobile: mobS.toLocaleString('ko-KR'),
+        monthlyTotal: (pcS+mobS).toLocaleString('ko-KR'),
+        competition: ciMap[ci] || ci || '—',
+        competitionScore: ci==='낮음'||ci==='low'?25 : ci==='높음'||ci==='high'?85 : 55,
+        avgCpc: mainKw.plAvgDepth ? Math.round(Number(mainKw.plAvgDepth)).toLocaleString('ko-KR')+'원' : '—',
+        trendData: null,
+        relatedKeywords: relKws.map(k => {
+          const kpc=pc(k.monthlyPcQcCnt), kmob=pc(k.monthlyMobileQcCnt);
+          const kci=k.compIdx||'';
+          return { word:k.relKeyword, vol:(kpc+kmob).toLocaleString('ko-KR'), comp:ciMap[kci]||kci||'—', pcVol:kpc, mobileVol:kmob };
+        }),
+      })
     };
+  } catch(err) {
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };
