@@ -7,6 +7,41 @@ function makeSignature(secretKey, timestamp, method, path) {
   return hmac.digest('base64');
 }
 
+function doRequest(hostname, path, apiKey, secretKey, customerId) {
+  const timestamp = Date.now().toString();
+  const signature = makeSignature(secretKey, timestamp, 'GET', '/keywordstool');
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname,
+      path,
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'X-Timestamp': timestamp,
+        'X-API-KEY': apiKey,
+        'X-Customer': String(customerId),
+        'X-Signature': signature,
+      },
+    }, (res) => {
+      // 308/301/302 리다이렉트 처리
+      if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location) {
+        const loc = res.headers.location;
+        const url = new URL(loc.startsWith('http') ? loc : `https://${hostname}${loc}`);
+        return doRequest(url.hostname, url.pathname + url.search, apiKey, secretKey, customerId)
+          .then(resolve).catch(reject);
+      }
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+        catch(e) { resolve({ status: res.statusCode, raw: data }); }
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -21,37 +56,9 @@ exports.handler = async (event) => {
     if (!keyword || !apiKey || !secretKey || !customerId)
       return { statusCode: 400, headers, body: JSON.stringify({ error: '파라미터 누락' }) };
 
-    const timestamp = Date.now().toString();
-    const signature = makeSignature(secretKey, timestamp, 'GET', '/keywordstool');
+    const path = `/keywordstool?hintKeywords=${encodeURIComponent(keyword)}&showDetail=1`;
+    const result = await doRequest('api.naver.com', path, apiKey, secretKey, customerId);
 
-    // includeHintKeywords 제거, showDetail만 사용
-    const fullPath = `/keywordstool?hintKeywords=${encodeURIComponent(keyword)}&showDetail=1`;
-
-    const result = await new Promise((resolve, reject) => {
-      const req = https.request({
-        hostname: 'api.naver.com',
-        path: fullPath,
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'X-Timestamp': timestamp,
-          'X-API-KEY': apiKey,
-          'X-Customer': String(customerId),
-          'X-Signature': signature,
-        },
-      }, (res) => {
-        let data = '';
-        res.on('data', chunk => data += chunk);
-        res.on('end', () => {
-          try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
-          catch(e) { resolve({ status: res.statusCode, raw: data }); }
-        });
-      });
-      req.on('error', reject);
-      req.end();
-    });
-
-    // 항상 debug 포함해서 반환 (디버깅용)
     const items = (result.body && result.body.keywordList) || [];
     const main = items.find(k => k.relKeyword === keyword) || items[0] || {};
     const rels = items.filter(k => k.relKeyword !== keyword);
@@ -84,10 +91,9 @@ exports.handler = async (event) => {
           pcVol: toNum(k.monthlyPcQcCnt),
           mobileVol: toNum(k.monthlyMobileQcCnt),
         })),
-        _debug: { status: result.status, itemCount: items.length, raw: result.raw, body: result.body }
+        _debug: { status: result.status, itemCount: items.length, raw: result.raw }
       })
     };
-
   } catch(err) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
