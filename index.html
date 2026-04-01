@@ -523,6 +523,22 @@ function showErr(m) { const b=document.getElementById('err'); b.textContent='오
 function setSt(m) { document.getElementById('loadTxt').textContent=m; }
 
 // ── Groq 호출 ──
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function callGroqWithRetry(prompt, sys, maxTok=3000, retries=3) {
+  for(let i=0; i<retries; i++) {
+    try {
+      return await callGroq(prompt, sys, maxTok);
+    } catch(e) {
+      if(e.message.includes('Rate limit') && i < retries-1) {
+        const wait = (i+1) * 8000;
+        setSt(`Rate limit 대기 중... ${Math.round(wait/1000)}초 후 재시도 (${i+1}/${retries})`);
+        await sleep(wait);
+      } else throw e;
+    }
+  }
+}
+
 async function callGroq(prompt, sys, maxTok=3000) {
   const key = gGroq();
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -580,18 +596,20 @@ ${realInfo}
 JSON:
 {"summary":"한줄설명30자이내","difficulty":"쉬움|보통|어려움|매우어려움","diffColor":"green|orange|red","saturation":"${hasReal?Math.round((parseInt(naverData.monthlyMobile?.replace(/,/g,''))||0)/1000*10)+'%':'AI추정'}","topAge":"평균 XX일","goldKeywords":[{"word":"황금키워드1","vol":"3,200","comp":"낮음","score":91,"isGold":true},{"word":"황금키워드2","vol":"2,100","comp":"낮음","score":87,"isGold":true},{"word":"황금키워드3","vol":"4,500","comp":"보통","score":74,"isGold":false},{"word":"황금키워드4","vol":"1,800","comp":"낮음","score":83,"isGold":true},{"word":"황금키워드5","vol":"900","comp":"낮음","score":78,"isGold":false},{"word":"황금키워드6","vol":"5,200","comp":"높음","score":61,"isGold":false},{"word":"황금키워드7","vol":"1,100","comp":"낮음","score":75,"isGold":false}],"exposure":{"optWords":"2,200~2,800자","images":"5~8장","tags":"20개","period":"14~30일","updateFreq":"주 3회 이상"},"checklist":[{"icon":"✍️","text":"제목에 키워드 포함 (앞쪽 배치)","score":"필수","level":"must"},{"icon":"📝","text":"본문 2,500자 이상 작성","score":"필수","level":"must"},{"icon":"🖼️","text":"직접 촬영 이미지 5장 이상","score":"중요","level":"high"},{"icon":"🏷️","text":"태그 15~20개 설정","score":"중요","level":"high"},{"icon":"🔗","text":"내부 링크 3개 이상 삽입","score":"권장","level":"mid"},{"icon":"📅","text":"꾸준한 포스팅 (주 3회+)","score":"권장","level":"mid"}],"trendDesc":"트렌드 설명 1문장","timingScores":{"일":40,"월":65,"화":95,"수":70,"목":90,"금":60,"토":45},"timingDesc":"화요일 오전 10시, 목요일 오후 2시가 조회수 최고점","series":[{"title":"시리즈제목1","desc":"1편 부제"},{"title":"시리즈제목2","desc":"2편"},{"title":"시리즈제목3","desc":"3편"},{"title":"시리즈제목4","desc":"4편"},{"title":"시리즈제목5","desc":"5편"}]}`;
 
-    const raw1 = await callGroq(p1, sys1, 3000);
+    const raw1 = await callGroqWithRetry(p1, sys1, 3000);
     const d1 = sj(raw1);
 
     // STEP 4: 제목 + 블로그 초안
     setSt('콘텐츠 제목 생성 중...');
     setStep(4);
+    await sleep(5000);
     const sys2 = `Korean SEO expert. Reply ONLY pure JSON.`;
-    const raw2 = await callGroq(`키워드 "${kw}" 네이버 블로그 SEO 제목 10개. JSON: {"titles":["제목1","제목2","제목3","제목4","제목5","제목6","제목7","제목8","제목9","제목10"]}`, sys2, 1000);
+    const raw2 = await callGroqWithRetry(`키워드"${kw}" 네이버 블로그 SEO 제목 10개. JSON: {"titles":["제목1","제목2","제목3","제목4","제목5","제목6","제목7","제목8","제목9","제목10"]}`, sys2, 1000);
     const d2 = sj(raw2);
 
     setSt('블로그 초안 생성 중...');
-    const blogDraft = await callGroq(
+    await sleep(5000);
+    const blogDraft = await callGroqWithRetry(
       `키워드 "${kw}" 네이버 블로그 포스팅 초안. 2000~2500자. 도입부(후킹)→소제목4개→마무리(CTA). 친근하고 유익한 톤. 서식 없이 텍스트만.`,
       `당신은 네이버 블로그 SEO 전문 작가입니다.`, 2500
     );
@@ -599,8 +617,9 @@ JSON:
     // STEP 5: 수익화
     setSt('수익화 분석 중...');
     setStep(5);
+    await sleep(5000);
     const sys4 = `Korean monetization expert. Reply ONLY pure JSON.`;
-    const raw4 = await callGroq(
+    const raw4 = await callGroqWithRetry(
       `키워드 "${kw}" 블로그 수익화. JSON: {"adsense":{"cpc":"420원","monthlyEst":"월 8~15만원","keywords":["kw1","kw2","kw3"]},"coupang":{"commission":"3~8%","products":["상품1","상품2","상품3"],"monthlyEst":"월 5~12만원"},"shoppingConnect":{"opportunity":"높음","categories":["카테고리1","카테고리2"],"monthlyEst":"월 10~20만원","tip":"팁"},"lecture":{"convRate":"2~5%","targetKw":["kw1","kw2","kw3"],"tip":"강의연계팁"}}`,
       sys4, 1200
     );
