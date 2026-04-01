@@ -543,7 +543,7 @@ async function callGroq(prompt, sys, maxTok=3000) {
   const key = gGroq();
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-    body: JSON.stringify({model:'llama-3.3-70b-versatile', messages:[{role:'system',content:sys},{role:'user',content:prompt}], max_tokens:maxTok, temperature:0.15})
+    body: JSON.stringify({model:'llama-3.1-8b-instant', messages:[{role:'system',content:sys},{role:'user',content:prompt}], max_tokens:maxTok, temperature:0.15})
   });
   if(!res.ok) { const e=await res.json().catch(()=>{}); throw new Error(e?.error?.message||'Groq API 오류'); }
   const d = await res.json();
