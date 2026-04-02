@@ -402,6 +402,7 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
       </div>
       <div class="card-body">
         <div class="gkw" id="goldList"></div>
+        <div id="top20BtnWrap"></div>
       </div>
     </div>
     <div class="card">
@@ -594,7 +595,7 @@ async function go() {
 ${realInfo}
 
 JSON:
-{"summary":"한줄설명30자이내","difficulty":"쉬움|보통|어려움|매우어려움","diffColor":"green|orange|red","saturation":"${hasReal?Math.round((parseInt(naverData.monthlyMobile?.replace(/,/g,''))||0)/1000*10)+'%':'AI추정'}","topAge":"평균 XX일","goldKeywords":[{"word":"황금키워드1","vol":"3,200","comp":"낮음","score":91,"isGold":true},{"word":"황금키워드2","vol":"2,100","comp":"낮음","score":87,"isGold":true},{"word":"황금키워드3","vol":"4,500","comp":"보통","score":74,"isGold":false},{"word":"황금키워드4","vol":"1,800","comp":"낮음","score":83,"isGold":true},{"word":"황금키워드5","vol":"900","comp":"낮음","score":78,"isGold":false},{"word":"황금키워드6","vol":"5,200","comp":"높음","score":61,"isGold":false},{"word":"황금키워드7","vol":"1,100","comp":"낮음","score":75,"isGold":false}],"exposure":{"optWords":"2,200~2,800자","images":"5~8장","tags":"20개","period":"14~30일","updateFreq":"주 3회 이상"},"checklist":[{"icon":"✍️","text":"제목에 키워드 포함 (앞쪽 배치)","score":"필수","level":"must"},{"icon":"📝","text":"본문 2,500자 이상 작성","score":"필수","level":"must"},{"icon":"🖼️","text":"직접 촬영 이미지 5장 이상","score":"중요","level":"high"},{"icon":"🏷️","text":"태그 15~20개 설정","score":"중요","level":"high"},{"icon":"🔗","text":"내부 링크 3개 이상 삽입","score":"권장","level":"mid"},{"icon":"📅","text":"꾸준한 포스팅 (주 3회+)","score":"권장","level":"mid"}],"trendDesc":"트렌드 설명 1문장","timingScores":{"일":40,"월":65,"화":95,"수":70,"목":90,"금":60,"토":45},"timingDesc":"화요일 오전 10시, 목요일 오후 2시가 조회수 최고점","series":[{"title":"시리즈제목1","desc":"1편 부제"},{"title":"시리즈제목2","desc":"2편"},{"title":"시리즈제목3","desc":"3편"},{"title":"시리즈제목4","desc":"4편"},{"title":"시리즈제목5","desc":"5편"}]}`;
+{"summary":"한줄설명30자이내","difficulty":"쉬움|보통|어려움|매우어려움","diffColor":"green|orange|red","saturation":"${hasReal?Math.round((parseInt(naverData.monthlyMobile?.replace(/,/g,''))||0)/1000*10)+'%':'AI추정'}","topAge":"평균 XX일 (숫자+일 형식으로만, 예: 평균 34일)","goldKeywords":[{"word":"황금키워드1","vol":"3,200","comp":"낮음","score":91,"isGold":true},{"word":"황금키워드2","vol":"2,100","comp":"낮음","score":87,"isGold":true},{"word":"황금키워드3","vol":"4,500","comp":"보통","score":74,"isGold":false},{"word":"황금키워드4","vol":"1,800","comp":"낮음","score":83,"isGold":true},{"word":"황금키워드5","vol":"900","comp":"낮음","score":78,"isGold":false},{"word":"황금키워드6","vol":"5,200","comp":"높음","score":61,"isGold":false},{"word":"황금키워드7","vol":"1,100","comp":"낮음","score":75,"isGold":false}],"exposure":{"optWords":"2,200~2,800자","images":"5~8장","tags":"20개","period":"14~30일","updateFreq":"주 3회 이상"},"checklist":[{"icon":"✍️","text":"제목에 키워드 포함 (앞쪽 배치)","score":"필수","level":"must"},{"icon":"📝","text":"본문 2,500자 이상 작성","score":"필수","level":"must"},{"icon":"🖼️","text":"직접 촬영 이미지 5장 이상","score":"중요","level":"high"},{"icon":"🏷️","text":"태그 15~20개 설정","score":"중요","level":"high"},{"icon":"🔗","text":"내부 링크 3개 이상 삽입","score":"권장","level":"mid"},{"icon":"📅","text":"꾸준한 포스팅 (주 3회+)","score":"권장","level":"mid"}],"trendDesc":"트렌드 설명 1문장","timingScores":{"일":40,"월":65,"화":95,"수":70,"목":90,"금":60,"토":45},"timingDesc":"화요일 오전 10시, 목요일 오후 2시가 조회수 최고점","series":[{"title":"시리즈제목1","desc":"1편 부제"},{"title":"시리즈제목2","desc":"2편"},{"title":"시리즈제목3","desc":"3편"},{"title":"시리즈제목4","desc":"4편"},{"title":"시리즈제목5","desc":"5편"}]}`;
 
     const raw1 = await callGroqWithRetry(p1, sys1, 3000);
     const d1 = sj(raw1);
@@ -693,7 +694,8 @@ function render(d) {
       <span class="tag ${k.comp==='낮음'?'tag-g':k.comp==='높음'?'tag-r':'tag-o'}">${k.comp}</span>
       ${k.isGold?'<span class="tag tag-gold">황금</span>':''}
       <span class="gkw-score">${k.score}</span>
-    </div>`).join('') + '<button class="top20-btn" onclick="openTop20()">🏆 현재 키워드 상위노출 블로그 TOP 20 보기</button>';
+    </div>`).join('');
+  document.getElementById('top20BtnWrap').innerHTML = '<button class="top20-btn" onclick="openTop20()">🏆 현재 키워드 상위노출 블로그 TOP 20 보기</button>';
 
   // 연관 키워드 (실제 데이터 우선)
   const rels = nr ? nr.relatedKeywords : (d.relatedKws||[]).map(k=>({word:k.word,vol:k.vol,comp:k.comp||'—'}));
@@ -811,12 +813,16 @@ async function openKwDetail(kw,vol,comp){
 {"monthlySearch":"${realVol}","pcSearch":"${nr?.monthlyPc||'—'}","mobileSearch":"${nr?.monthlyMobile||'—'}","competition":"${realComp}","difficulty":"쉬움","opportunity":78,"saturation":"120%","cpc":"350원","topAge":"28일","strategy":"이 키워드 상위노출 전략 3문장.","targetUser":"주요 타겟 유저 특성 2문장.","bestTitles":["제목1","제목2","제목3","제목4","제목5"],"tags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8"],"warning":"주의할 점 2문장."}`;
     const raw=await callGroqWithRetry(p,sys,1200);
     const d=sj(raw);
-    const oc=d.opportunity>=70?'var(--green)':d.opportunity>=40?'var(--orange)':'var(--red)';
+    const ms = d.monthlySearch||realVol||'—';
+    const pcs = d.pcSearch||(nr?.monthlyPc)||'—';
+    const mbs = d.mobileSearch||(nr?.monthlyMobile)||'—';
+    const opp = typeof d.opportunity==='number' ? d.opportunity : 50;
+    const oc=opp>=70?'var(--green)':opp>=40?'var(--orange)':'var(--red)';
     document.getElementById('modalBody').innerHTML=`
       <div class="kd-metrics">
-        <div class="kd-mc"><div class="kd-mc-lbl">월 검색량 <span class="real-tag">${nr?'실제':'AI'}</span></div><div class="kd-mc-val" style="color:var(--green)">${d.monthlySearch}</div><div class="kd-mc-sub">PC ${d.pcSearch} / 모바일 ${d.mobileSearch}</div></div>
-        <div class="kd-mc"><div class="kd-mc-lbl">기회도</div><div class="kd-mc-val" style="color:${oc}">${d.opportunity}점</div><div class="kd-mc-sub">${d.difficulty}</div></div>
-        <div class="kd-mc"><div class="kd-mc-lbl">평균 CPC</div><div class="kd-mc-val" style="color:var(--blue)">${d.cpc}</div><div class="kd-mc-sub">포화도 ${d.saturation}</div></div>
+        <div class="kd-mc"><div class="kd-mc-lbl">월 검색량 <span class="real-tag">${nr?'실제':'AI'}</span></div><div class="kd-mc-val" style="color:var(--green)">${ms}</div><div class="kd-mc-sub">PC ${pcs} / 모바일 ${mbs}</div></div>
+        <div class="kd-mc"><div class="kd-mc-lbl">기회도</div><div class="kd-mc-val" style="color:${oc}">${opp}점</div><div class="kd-mc-sub">${d.difficulty||'—'}</div></div>
+        <div class="kd-mc"><div class="kd-mc-lbl">평균 CPC</div><div class="kd-mc-val" style="color:var(--blue)">${d.cpc||'—'}</div><div class="kd-mc-sub">포화도 ${d.saturation||'—'}</div></div>
       </div>
       <div class="kd-section"><div class="kd-sec-title">📌 상위노출 전략</div><div class="kd-text">${(d.strategy||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div></div>
       <div class="kd-section"><div class="kd-sec-title">👥 타겟 유저</div><div class="kd-text">${d.targetUser||'—'}</div></div>
