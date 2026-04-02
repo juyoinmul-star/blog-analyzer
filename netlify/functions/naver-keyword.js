@@ -2,11 +2,10 @@ const https = require('https');
 const crypto = require('crypto');
 
 function makeSignature(secretKey, timestamp, method, path) {
+  // 공식 Python 샘플과 동일: secret_key.encode("utf-8"), message.encode("utf-8")
   const message = `${timestamp}.${method}.${path}`;
-  // 비밀키는 Base64 인코딩된 키이므로 디코딩 후 사용
-  const decodedKey = Buffer.from(secretKey, 'base64');
-  const hmac = crypto.createHmac('sha256', decodedKey);
-  hmac.update(message, 'utf-8');
+  const hmac = crypto.createHmac('sha256', secretKey);
+  hmac.update(message);
   return hmac.digest('base64');
 }
 
@@ -25,10 +24,8 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: '파라미터 누락' }) };
 
     const timestamp = Date.now().toString();
-    const method = 'GET';
-    const endpointPath = '/keywordstool';
-    const signature = makeSignature(secretKey, timestamp, method, endpointPath);
-    const fullPath = `${endpointPath}?hintKeywords=${encodeURIComponent(keyword)}&showDetail=1`;
+    const signature = makeSignature(secretKey, timestamp, 'GET', '/keywordstool');
+    const fullPath = `/keywordstool?hintKeywords=${encodeURIComponent(keyword)}&showDetail=1`;
 
     const result = await new Promise((resolve, reject) => {
       const req = https.request({
