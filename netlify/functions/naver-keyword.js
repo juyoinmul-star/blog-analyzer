@@ -26,9 +26,7 @@ exports.handler = async (event) => {
     const signature = makeSignature(secretKey, timestamp, 'GET', '/keywordstool');
     
     // 공백을 +로 인코딩 (네이버 API 형식)
-    const encodedKw = keyword.trim().split('').map(c => 
-      c === ' ' ? '+' : encodeURIComponent(c)
-    ).join('');
+    const encodedKw = encodeURIComponent(keyword.trim());
     
     const fullPath = `/keywordstool?hintKeywords=${encodedKw}&showDetail=1`;
 
