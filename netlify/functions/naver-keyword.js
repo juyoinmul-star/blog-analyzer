@@ -26,7 +26,9 @@ exports.handler = async (event) => {
     const signature = makeSignature(secretKey, timestamp, 'GET', '/keywordstool');
     
     // 공백을 +로 인코딩 (네이버 API 형식)
-    const encodedKw = encodeURIComponent(keyword.trim());
+    // 네이버 API는 띄어쓰기 포함 키워드를 거부하므로 공백 제거 후 검색
+    const searchKw = keyword.trim().replace(/\s+/g, '');
+    const encodedKw = encodeURIComponent(searchKw);
     
     const fullPath = `/keywordstool?hintKeywords=${encodedKw}&showDetail=1`;
 
