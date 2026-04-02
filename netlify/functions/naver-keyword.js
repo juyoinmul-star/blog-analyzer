@@ -2,7 +2,6 @@ const https = require('https');
 const crypto = require('crypto');
 
 function makeSignature(secretKey, timestamp, method, path) {
-  // 공식 Python 샘플과 동일: secret_key.encode("utf-8"), message.encode("utf-8")
   const message = `${timestamp}.${method}.${path}`;
   const hmac = crypto.createHmac('sha256', secretKey);
   hmac.update(message);
@@ -25,7 +24,13 @@ exports.handler = async (event) => {
 
     const timestamp = Date.now().toString();
     const signature = makeSignature(secretKey, timestamp, 'GET', '/keywordstool');
-    const fullPath = `/keywordstool?hintKeywords=${encodeURIComponent(keyword)}&showDetail=1`;
+    
+    // 공백을 +로 인코딩 (네이버 API 형식)
+    const encodedKw = keyword.trim().split('').map(c => 
+      c === ' ' ? '+' : encodeURIComponent(c)
+    ).join('');
+    
+    const fullPath = `/keywordstool?hintKeywords=${encodedKw}&showDetail=1`;
 
     const result = await new Promise((resolve, reject) => {
       const req = https.request({
@@ -58,7 +63,7 @@ exports.handler = async (event) => {
           keyword, monthlyPc: '0', monthlyMobile: '0', monthlyTotal: '0',
           competition: '—', competitionScore: 55, avgCpc: '—',
           trendData: null, relatedKeywords: [],
-          _debug: { status: result.status, body: result.body, raw: result.raw }
+          _debug: { status: result.status, body: result.body, raw: result.raw, path: fullPath }
         })
       };
     }
