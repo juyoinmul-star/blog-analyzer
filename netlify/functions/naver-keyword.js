@@ -2,8 +2,10 @@ const https = require('https');
 const crypto = require('crypto');
 
 function makeSignature(secretKey, timestamp, method, path) {
-  const hmac = crypto.createHmac('sha256', secretKey);
-  hmac.update(timestamp + '.' + method + '.' + path);
+  // 공식 샘플과 동일하게 utf-8 인코딩 명시
+  const message = `${timestamp}.${method}.${path}`;
+  const hmac = crypto.createHmac('sha256', Buffer.from(secretKey, 'utf-8'));
+  hmac.update(Buffer.from(message, 'utf-8'));
   return hmac.digest('base64');
 }
 
@@ -22,13 +24,16 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: '파라미터 누락' }) };
 
     const timestamp = Date.now().toString();
-    const signature = makeSignature(secretKey, timestamp, 'GET', '/keywordstool');
-    const path = `/keywordstool?hintKeywords=${encodeURIComponent(keyword)}&showDetail=1`;
+    const method = 'GET';
+    const endpointPath = '/keywordstool';
+    const signature = makeSignature(secretKey, timestamp, method, endpointPath);
+    const queryString = `hintKeywords=${encodeURIComponent(keyword)}&showDetail=1`;
+    const fullPath = `${endpointPath}?${queryString}`;
 
     const result = await new Promise((resolve, reject) => {
       const req = https.request({
-        hostname: 'api.searchad.naver.com',  // 올바른 호스트
-        path,
+        hostname: 'api.searchad.naver.com',
+        path: fullPath,
         method: 'GET',
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -48,6 +53,19 @@ exports.handler = async (event) => {
       req.on('error', reject);
       req.end();
     });
+
+    // 403이면 debug 정보 포함해서 반환
+    if (result.status !== 200) {
+      return {
+        statusCode: 200, headers,
+        body: JSON.stringify({
+          keyword, monthlyPc: '0', monthlyMobile: '0', monthlyTotal: '0',
+          competition: '—', competitionScore: 55, avgCpc: '—',
+          trendData: null, relatedKeywords: [],
+          _debug: { status: result.status, body: result.body, raw: result.raw }
+        })
+      };
+    }
 
     const items = (result.body && result.body.keywordList) || [];
     const main = items.find(k => k.relKeyword === keyword) || items[0] || {};
@@ -81,10 +99,10 @@ exports.handler = async (event) => {
           pcVol: toNum(k.monthlyPcQcCnt),
           mobileVol: toNum(k.monthlyMobileQcCnt),
         })),
-        _debug: { status: result.status, itemCount: items.length, raw: result.raw }
+        _debug: { status: result.status, itemCount: items.length }
       })
     };
   } catch(err) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message, stack: err.stack }) };
   }
 };
