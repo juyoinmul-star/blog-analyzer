@@ -602,39 +602,78 @@ function showErr(m){const b=document.getElementById('err');b.textContent='오류
 function setSt(m){document.getElementById('loadTxt').textContent=m;}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-// ── Groq ──
-async function callGroqWithRetry(prompt,sys,maxTok=2000,retries=3){
+// ── Groq 키 로테이션 ──
+// 헤더의 단일 키 외에, 추가 키를 아래 배열에 입력하면 자동 로테이션됩니다
+// 예: const GROQ_KEYS = ['gsk_key1', 'gsk_key2', 'gsk_key3'];
+const GROQ_KEYS = [];
+let _groqKeyIdx = 0;
+function getNextGroqKey(){
+  // 헤더 입력 키
+  const headerKey = document.getElementById('groqKey').value.trim();
+  if(GROQ_KEYS.length === 0){
+    if(!headerKey) throw new Error('Groq API 키를 입력해주세요');
+    return headerKey;
+  }
+  // 배열에 헤더 키 포함해서 로테이션
+  const allKeys = headerKey ? [headerKey, ...GROQ_KEYS] : GROQ_KEYS;
+  const key = allKeys[_groqKeyIdx % allKeys.length];
+  _groqKeyIdx++;
+  if(!key) throw new Error('Groq API 키를 입력해주세요');
+  return key;
+}
+
+async function callGroqWithRetry(prompt,sys,maxTok=2000,retries=4){
   for(let i=0;i<retries;i++){
     try{return await callGroq(prompt,sys,maxTok);}
     catch(e){
-      if(e.message.includes('Rate limit')&&i<retries-1){
-        const w=(i+1)*9000;setSt('Rate limit 대기 '+Math.round(w/1000)+'초...');await sleep(w);
+      const isRateLimit=e.message.includes('Rate limit')||e.message.includes('rate_limit')||e.message.includes('429');
+      if(isRateLimit&&i<retries-1){
+        // 다음 키로 즉시 전환 시도
+        _groqKeyIdx++;
+        const allKeys=[document.getElementById('groqKey').value.trim(),...GROQ_KEYS].filter(Boolean);
+        if(allKeys.length>1){
+          setSt('다른 키로 재시도 중...');
+          await sleep(1500);
+        } else {
+          const w=(i+1)*10000;
+          setSt('Rate limit 대기 '+Math.round(w/1000)+'초... ('+(i+1)+'/'+retries+')');
+          await sleep(w);
+        }
       } else throw e;
     }
   }
 }
 async function callGroq(prompt,sys,maxTok=2000){
-  const key=gGroq();
+  const key=getNextGroqKey();
   const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
     method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-    body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'system',content:sys},{role:'user',content:prompt}],max_tokens:maxTok,temperature:0.15})
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:sys},{role:'user',content:prompt}],max_tokens:maxTok,temperature:0.15})
   });
   if(!res.ok){const e=await res.json().catch(()=>{});throw new Error(e?.error?.message||'Groq API 오류');}
   const d=await res.json();return d.choices?.[0]?.message?.content||'';
 }
 
-// ── JSON 파싱 (수정됨: 정규식 오류 제거) ──
+// ── JSON 파싱 (강화: 잘린 JSON 복구 + 정규식 오류 제거) ──
 function sj(raw){
   const c=raw.replace(/```json|```/gi,'').trim();
-  const si=c.indexOf('{'), ei=c.lastIndexOf('}');
-  if(si===-1||ei===-1) throw new Error('JSON 파싱 실패');
+  const si=c.indexOf('{');
+  if(si===-1) throw new Error('JSON 파싱 실패: { 없음');
+  let ei=c.lastIndexOf('}');
+  // } 가 없으면 마지막에 강제로 닫기 시도
+  const slice=ei===-1?c.slice(si)+'}':c.slice(si,ei+1);
   try{
-    return JSON.parse(c.slice(si,ei+1));
+    return JSON.parse(slice);
   } catch(e){
-    // 제어문자 및 비ASCII 특수문자 제거 후 재시도
-    const fixed=c.slice(si,ei+1).replace(/[\u0000-\u001F\u007F]/g,' ');
-    try{ return JSON.parse(fixed); }
-    catch(e2){ throw new Error('JSON 파싱 실패: '+e2.message); }
+    // 1차: 제어문자 제거
+    const fixed1=slice.replace(/[\u0000-\u001F\u007F]/g,' ');
+    try{ return JSON.parse(fixed1); }
+    catch(e2){
+      // 2차: 마지막 불완전 키-값 쌍 잘라내고 닫기
+      const trimmed=fixed1.replace(/,\s*"[^"]*"\s*:\s*[^,}\]]*$/,'');
+      const closed=trimmed.endsWith('}')?trimmed:trimmed+'}';
+      try{ return JSON.parse(closed); }
+      catch(e3){ throw new Error('JSON 파싱 실패: '+e3.message); }
+    }
   }
 }
 
@@ -686,48 +725,53 @@ async function runCompare(){
   }catch(e){hideLoad();showErr(e.message);}
 }
 
-// ── 메인 분석 ──
+// ── 메인 분석 (2번 호출로 최적화) ──
 async function go(){
   const kw=document.getElementById('kwInput').value.trim();if(!kw)return;
   curKw=kw;showLoad('네이버 검색량 조회 중...');
   try{
+    // STEP 1: 네이버 API (실제 데이터)
     setStep(1);
     const naverData=await callNaver(kw);
     setStep(2);
-    setSt('AI 전략 분석 중...');setStep(3);
+
     const hasReal=!!naverData&&!naverData.error;
-    const realInfo=hasReal?'실제 데이터: PC '+naverData.monthlyPc+', 모바일 '+naverData.monthlyMobile+', 경쟁도 '+naverData.competition+', 연관키워드 '+(naverData.relatedKeywords?.length||0)+'개':'(AI 추정)';
-    const sys1='Korean Naver blog SEO expert. Reply ONLY pure JSON, no markdown.';
+    const realInfo=hasReal
+      ?'실제데이터: PC '+naverData.monthlyPc+', 모바일 '+naverData.monthlyMobile+', 경쟁도 '+naverData.competition+', 연관키워드 '+(naverData.relatedKeywords?.length||0)+'개'
+      :'(AI추정)';
     const sat=hasReal?Math.round((parseInt(naverData?.monthlyMobile?.replace(/,/g,'')||0)/1000*10))+'%':'AI추정';
-    const p1='키워드 "'+kw+'". '+realInfo+'. JSON:{'
-      +'"summary":"한줄요약30자이내",'
-      +'"difficulty":"쉬움",'
-      +'"diffColor":"green",'
-      +'"saturation":"'+sat+'",'
-      +'"topAge":"평균 30일",'
-      +'"goldKeywords":[{"word":"연관황금키워드1","vol":"3200","comp":"낮음","score":91,"isGold":true},{"word":"연관황금키워드2","vol":"2100","comp":"낮음","score":87,"isGold":true},{"word":"연관황금키워드3","vol":"4500","comp":"보통","score":74,"isGold":false},{"word":"연관황금키워드4","vol":"1800","comp":"낮음","score":83,"isGold":true},{"word":"연관황금키워드5","vol":"900","comp":"낮음","score":78,"isGold":false},{"word":"연관황금키워드6","vol":"5200","comp":"높음","score":61,"isGold":false},{"word":"연관황금키워드7","vol":"1100","comp":"낮음","score":75,"isGold":false}],'
+
+    // STEP 2: 1번째 AI 호출 — 전략+황금키워드+제목+타이밍+타겟+SNS 한번에
+    setSt('AI 종합 분석 중...');setStep(3);
+    const p1='키워드"'+kw+'" '+realInfo+'. 아래 JSON 형식 그대로 값만 채워서 반환. ONLY JSON:
+'
+      +'{"summary":"30자이내","difficulty":"쉬움","diffColor":"green","saturation":"'+sat+'",'
+      +'"topAge":"평균30일",'
+      +'"goldKeywords":[{"word":"키워드","vol":"2400","comp":"낮음","score":88,"isGold":true},{"word":"키워드2","vol":"1800","comp":"낮음","score":84,"isGold":true},{"word":"키워드3","vol":"3200","comp":"보통","score":71,"isGold":false},{"word":"키워드4","vol":"1100","comp":"낮음","score":79,"isGold":true},{"word":"키워드5","vol":"800","comp":"낮음","score":74,"isGold":false},{"word":"키워드6","vol":"4100","comp":"높음","score":58,"isGold":false},{"word":"키워드7","vol":"950","comp":"낮음","score":72,"isGold":false}],'
+      +'"titles":["SEO제목1","SEO제목2","SEO제목3","SEO제목4","SEO제목5","SEO제목6","SEO제목7","SEO제목8","SEO제목9","SEO제목10"],'
       +'"exposure":{"optWords":"2200~2800자","images":"5~8장","tags":"20개","period":"14~30일","updateFreq":"주3회이상"},'
-      +'"checklist":[{"icon":"✍️","text":"제목에 키워드 포함","score":"필수","level":"must"},{"icon":"📝","text":"본문 2500자 이상 작성","score":"필수","level":"must"},{"icon":"🖼️","text":"직접 촬영 이미지 5장 이상","score":"중요","level":"high"},{"icon":"🏷️","text":"태그 15~20개 설정","score":"중요","level":"high"},{"icon":"🔗","text":"내부 링크 3개 이상 삽입","score":"권장","level":"mid"},{"icon":"📅","text":"꾸준한 포스팅 주3회","score":"권장","level":"mid"}],'
-      +'"trendDesc":"트렌드 설명",'
+      +'"checklist":[{"icon":"✍️","text":"제목에 키워드 포함","score":"필수","level":"must"},{"icon":"📝","text":"본문 2500자 이상","score":"필수","level":"must"},{"icon":"🖼️","text":"직접 촬영 이미지 5장+","score":"중요","level":"high"},{"icon":"🏷️","text":"태그 15~20개","score":"중요","level":"high"},{"icon":"🔗","text":"내부 링크 3개+","score":"권장","level":"mid"},{"icon":"📅","text":"주3회 이상 발행","score":"권장","level":"mid"}],'
+      +'"trendDesc":"트렌드설명",'
       +'"timingScores":{"일":40,"월":65,"화":95,"수":70,"목":90,"금":60,"토":45},'
-      +'"timingDesc":"최적 발행 시간 설명"'
+      +'"timingDesc":"최적발행시간",'
+      +'"intentAnalysis":{"issue":35,"info":80,"commercial":45,"issueDesc":"설명","infoDesc":"설명","commDesc":"설명","summary":"1문장"},'
+      +'"demographic":{"maleRatio":45,"ageGroups":[{"age":"10대","pct":5},{"age":"20대","pct":25},{"age":"30대","pct":35},{"age":"40대","pct":25},{"age":"50대+","pct":10}],"summary":"1문장"},'
+      +'"snsInsta":"인스타캡션 이모지+해시태그10개 150자"'
       +'}';
-    const raw1=await callGroqWithRetry(p1,sys1,2500);
+    const raw1=await callGroqWithRetry(p1,'Korean Naver blog SEO expert. Reply ONLY valid JSON, no markdown, no explanation.',3500);
     const d1=sj(raw1);
-    setStep(4);setSt('콘텐츠 생성 중...');
-    await sleep(5000);
-    const [raw2,blogDraft]=await Promise.all([
-      callGroqWithRetry('키워드"'+kw+'" 네이버블로그 SEO제목 10개. JSON:{"titles":["제목1","제목2","제목3","제목4","제목5","제목6","제목7","제목8","제목9","제목10"]}',"Korean SEO expert. Reply ONLY pure JSON.",800),
-      callGroqWithRetry('키워드 "'+kw+'" 블로그 포스팅. 2000~2500자. 도입(후킹)→소제목4개→마무리. 텍스트만.','당신은 네이버 블로그 SEO 전문 작가입니다.',2500)
-    ]);
-    const d2=sj(raw2);
-    setStep(5);setSt('타겟·SNS 분석 중...');
-    await sleep(5000);
-    const p5='키워드 "'+kw+'". JSON:{"intentAnalysis":{"issue":35,"info":80,"commercial":45,"issueDesc":"이슈성 설명","infoDesc":"정보성 설명","commDesc":"상업성 설명","summary":"키워드 성격 1문장"},"demographic":{"maleRatio":45,"ageGroups":[{"age":"10대","pct":5},{"age":"20대","pct":25},{"age":"30대","pct":35},{"age":"40대","pct":25},{"age":"50대+","pct":10}],"summary":"독자층 특성 1문장"},"snsInsta":"인스타캡션 이모지포함 해시태그10개 150자"}';
-    const raw5=await callGroqWithRetry(p5,'Korean SNS marketing expert. Reply ONLY pure JSON, no markdown.',1200);
-    const d5=sj(raw5);
+
+    // STEP 3: 2번째 AI 호출 — 블로그 초안 (텍스트라 JSON 없음, 빠름)
+    setStep(4);setSt('블로그 초안 작성 중...');
+    const blogDraft=await callGroqWithRetry(
+      '키워드 "'+kw+'" 네이버 블로그 포스팅. 2000자 이상. 후킹도입→소제목4개(각 300자+)→마무리CTA. 텍스트만 출력.',
+      '당신은 네이버 블로그 상위노출 전문 작가입니다. 텍스트만 출력하세요.',
+      2500
+    );
+
+    setStep(5);
     if(hasReal)d1.naverReal=naverData;
-    D={...d1,titles:d2.titles,blogDraft,intentAnalysis:d5.intentAnalysis,demographic:d5.demographic,snsInsta:d5.snsInsta,kw,hasReal};
+    D={...d1,blogDraft,kw,hasReal};
     hideLoad();render(D);
   }catch(e){hideLoad();showErr(e.message);}
 }
