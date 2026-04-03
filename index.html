@@ -3,328 +3,314 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>블로그랭크 — 네이버 블로그 키워드 분석기</title>
-<link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>블로그랭크 — 네이버 블로그 키워드 분석</title>
+<link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@500;700&family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f7f5f0;--white:#fff;--surface:#fdfcf9;--border:#e8e4dc;--border2:#d4cfc6;--ink:#1a1814;--ink2:#3d3a34;--muted:#7a7670;--dim:#b0aba3;--green:#03c75a;--green2:#029a47;--greenBg:#edfbf3;--greenBorder:#b8f0d0;--red:#e85151;--redBg:#fff0f0;--orange:#f57c28;--orangeBg:#fff6ef;--blue:#3d82f6;--blueBg:#eff5ff;--gold:#d4a017;--goldBg:#fdf8e8;--goldBorder:#f0d870;--purple:#7c5cbf;--purpleBg:#f5f0ff;--sh:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.05);--sh2:0 2px 8px rgba(0,0,0,.08),0 8px 32px rgba(0,0,0,.06);}
 *{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',sans-serif;min-height:100vh;}
-/* 헤더 */
-header{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;box-shadow:0 1px 0 var(--border);}
-.logo{font-family:'Gmarket Sans',sans-serif;font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px;}
-.logo-dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(3,199,90,.2);}
-.logo em{color:var(--green);font-style:normal;}
-.hdr-right{display:flex;align-items:center;gap:8px;}
-.key-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink2);transition:all .15s;font-family:'Noto Sans KR',sans-serif;}
-.key-btn:hover{border-color:var(--green);color:var(--green);}
-.key-dot{width:7px;height:7px;border-radius:50%;background:var(--dim);}
-.key-dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(3,199,90,.2);}
-.groq-wrap{display:flex;align-items:center;gap:7px;padding:7px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;}
-.groq-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);}
-.groq-in{background:none;border:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink);outline:none;width:160px;}
-.groq-in::placeholder{color:var(--dim);}
-.groq-dot{width:7px;height:7px;border-radius:50%;background:var(--dim);transition:all .3s;}
-.groq-dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(3,199,90,.2);}
 
-/* API 키 설정 패널 */
+/* ── 헤더 ── */
+header{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Gmarket Sans',sans-serif;font-size:19px;font-weight:700;display:flex;align-items:center;gap:7px;}
+.logo-dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(3,199,90,.2);}
+.logo em{color:var(--green);font-style:normal;}
+.hdr-right{display:flex;align-items:center;gap:7px;}
+.groq-wrap{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border:1px solid var(--border);border-radius:9px;}
+.groq-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--dim);}
+.groq-in{background:none;border:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink);outline:none;width:150px;}
+.groq-in::placeholder{color:var(--dim);}
+.groq-dot,.key-dot{width:7px;height:7px;border-radius:50%;background:var(--dim);transition:all .3s;}
+.groq-dot.on,.key-dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(3,199,90,.2);}
+.key-btn{display:flex;align-items:center;gap:6px;padding:6px 13px;background:var(--bg);border:1px solid var(--border);border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink2);font-family:'Noto Sans KR',sans-serif;}
+.key-btn:hover{border-color:var(--green);color:var(--green);}
+
+/* ── 키 설정 패널 ── */
 .key-panel{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px;}
-.key-panel.show{display:flex;animation:fadeIn .2s ease;}
-.key-box{background:var(--white);border-radius:20px;padding:28px;width:100%;max-width:480px;box-shadow:0 24px 80px rgba(0,0,0,.2);}
-.key-box h2{font-family:'Gmarket Sans',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;}
-.key-box p{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
-.key-field{margin-bottom:14px;}
-.key-field label{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
-.key-field input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);outline:none;transition:border-color .2s;background:var(--surface);}
+.key-panel.show{display:flex;}
+.key-box{background:var(--white);border-radius:18px;padding:26px;width:100%;max-width:460px;}
+.key-box h2{font-family:'Gmarket Sans',sans-serif;font-size:17px;font-weight:700;margin-bottom:5px;}
+.key-box p{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6;}
+.key-field{margin-bottom:12px;}
+.key-field label{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.key-field input{width:100%;padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);outline:none;background:var(--surface);}
 .key-field input:focus{border-color:var(--green);}
-.key-field input::placeholder{color:var(--dim);}
-.key-actions{display:flex;gap:8px;margin-top:20px;}
-.key-save{flex:1;padding:11px;background:var(--green);color:white;border:none;border-radius:10px;font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .18s;}
+.key-actions{display:flex;gap:7px;margin-top:18px;}
+.key-save{flex:1;padding:10px;background:var(--green);color:white;border:none;border-radius:9px;font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
 .key-save:hover{background:var(--green2);}
-.key-cancel{padding:11px 20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;color:var(--muted);}
-.key-guide{margin-top:14px;padding:12px;background:var(--blueBg);border-radius:10px;font-size:11px;color:var(--blue);line-height:1.7;}
+.key-cancel{padding:10px 18px;background:var(--surface);border:1px solid var(--border);border-radius:9px;font-size:13px;cursor:pointer;color:var(--muted);font-family:'Noto Sans KR',sans-serif;}
+.key-guide{margin-top:12px;padding:10px;background:var(--blueBg);border-radius:9px;font-size:11px;color:var(--blue);line-height:1.7;}
 .key-guide a{color:var(--blue);font-weight:700;}
 
-/* 히어로 */
-.hero{padding:52px 28px 36px;text-align:center;max-width:700px;margin:0 auto;}
-.hero-tag{display:inline-flex;align-items:center;gap:5px;background:var(--greenBg);border:1px solid var(--greenBorder);border-radius:100px;padding:4px 14px;font-size:11px;font-weight:700;color:var(--green2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px;}
-.real-badge{background:var(--blueBg);border-color:#c8dcff;color:var(--blue);margin-left:8px;}
-.hero h1{font-family:'Gmarket Sans',sans-serif;font-size:clamp(26px,5vw,46px);font-weight:700;line-height:1.2;letter-spacing:-0.02em;margin-bottom:12px;}
+/* ── 히어로 ── */
+.hero{padding:44px 20px 30px;text-align:center;max-width:620px;margin:0 auto;}
+.hero h1{font-family:'Gmarket Sans',sans-serif;font-size:clamp(24px,5vw,42px);font-weight:700;line-height:1.2;letter-spacing:-0.02em;margin-bottom:10px;}
 .hero h1 em{color:var(--green);font-style:normal;}
-.hero p{font-size:14px;color:var(--muted);line-height:1.7;font-weight:300;margin-bottom:32px;}
-.search-wrap{max-width:560px;margin:0 auto;}
-.search-box{display:flex;align-items:center;background:var(--white);border:2px solid var(--border);border-radius:16px;padding:6px 6px 6px 18px;gap:8px;box-shadow:var(--sh2);transition:border-color .2s,box-shadow .2s;}
-.search-box:focus-within{border-color:var(--green);box-shadow:0 0 0 4px rgba(3,199,90,.1),var(--sh2);}
-.search-box input{flex:1;background:none;border:none;font-family:'Noto Sans KR',sans-serif;font-size:16px;font-weight:500;color:var(--ink);outline:none;}
+.hero p{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:26px;}
+.search-box{display:flex;align-items:center;background:var(--white);border:2px solid var(--border);border-radius:14px;padding:5px 5px 5px 16px;gap:7px;box-shadow:var(--sh2);transition:border-color .2s;}
+.search-box:focus-within{border-color:var(--green);box-shadow:0 0 0 4px rgba(3,199,90,.1);}
+.search-box input{flex:1;background:none;border:none;font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:500;color:var(--ink);outline:none;}
 .search-box input::placeholder{color:var(--dim);}
-.search-btn{padding:11px 26px;background:var(--green);color:white;border:none;border-radius:11px;font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .18s;white-space:nowrap;}
-.search-btn:hover{background:var(--green2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(3,199,90,.3);}
-.search-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
-.ex-chips{display:flex;justify-content:center;gap:6px;margin-top:12px;flex-wrap:wrap;}
-.ec{padding:5px 12px;border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;background:var(--white);}
+.search-btn{padding:10px 22px;background:var(--green);color:white;border:none;border-radius:10px;font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.search-btn:hover{background:var(--green2);}
+.search-btn:disabled{opacity:.4;cursor:not-allowed;}
+.ex-chips{display:flex;justify-content:center;gap:5px;margin-top:10px;flex-wrap:wrap;}
+.ec{padding:4px 11px;border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);cursor:pointer;background:var(--white);}
 .ec:hover{border-color:var(--green);color:var(--green);}
+.ds-row{display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.ds{display:flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:600;background:var(--greenBg);color:var(--green2);border:1px solid var(--greenBorder);}
+.ds.ai{background:var(--blueBg);color:var(--blue);border-color:#c8dcff;}
 
-/* 데이터 출처 표시 */
-.data-source{display:flex;justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap;}
-.ds-badge{display:flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:600;}
-.ds-real{background:var(--greenBg);color:var(--green2);border:1px solid var(--greenBorder);}
-.ds-ai{background:var(--blueBg);color:var(--blue);border:1px solid #c8dcff;}
+/* ── 비교 입력 ── */
+.compare-wrap{max-width:620px;margin:0 auto 0;padding:0 20px;}
+.compare-toggle{display:flex;align-items:center;gap:7px;justify-content:center;margin-bottom:12px;font-size:12px;color:var(--muted);cursor:pointer;}
+.compare-toggle input{accent-color:var(--green);}
+.compare-inputs{display:none;gap:8px;flex-direction:column;}
+.compare-inputs.show{display:flex;}
+.cmp-row{display:flex;gap:6px;}
+.cmp-input{flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;}
+.cmp-input:focus{border-color:var(--green);}
+.cmp-btn{padding:8px 16px;background:var(--green);color:white;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;}
 
-/* 로딩 */
-.loading{display:none;text-align:center;padding:56px 28px;}
+/* ── 로딩/에러 ── */
+.loading{display:none;text-align:center;padding:50px 20px;}
 .loading.show{display:block;}
-.loader{width:42px;height:42px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
+.loader{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-.load-txt{font-size:13px;color:var(--muted);margin-bottom:14px;}
-.load-steps{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;}
-.lstep{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim);transition:color .3s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.load-txt{font-size:13px;color:var(--muted);margin-bottom:12px;}
+.load-steps{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
+.lstep{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--dim);}
 .lstep.active{color:var(--green);font-weight:700;}
 .lstep.done::before{content:'✓ ';}
 .lstep.done{color:var(--ink2);}
-.ldot{width:5px;height:5px;border-radius:50%;background:currentColor;}
-
-/* 에러 */
-.err{display:none;background:var(--redBg);border:1px solid #ffc5c5;border-radius:10px;padding:12px 18px;font-size:13px;color:var(--red);max-width:560px;margin:0 auto 18px;text-align:center;}
+.ldot{width:4px;height:4px;border-radius:50%;background:currentColor;}
+.err{display:none;background:var(--redBg);border:1px solid #ffc5c5;border-radius:10px;padding:11px 16px;font-size:13px;color:var(--red);max-width:560px;margin:0 auto 16px;text-align:center;}
 .err.show{display:block;}
 
-/* 결과 */
-.result{display:none;max-width:1080px;margin:0 auto;padding:0 22px 80px;}
-.result.show{display:block;animation:fadeUp .5s ease;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+/* ── 결과 ── */
+.result{display:none;max-width:1040px;margin:0 auto;padding:0 18px 70px;}
+.result.show{display:block;animation:fadeUp .4s ease;}
+.kw-banner{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:18px 22px;margin-bottom:12px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.kw-label{font-size:11px;color:var(--muted);margin-bottom:3px;}
+.kw-word{font-family:'Gmarket Sans',sans-serif;font-size:22px;font-weight:700;}
+.kw-summary{font-size:12px;color:var(--muted);margin-top:4px;max-width:440px;}
+.diff-badge{padding:5px 13px;border-radius:100px;font-size:12px;font-weight:700;}
 
-/* 키워드 배너 */
-.kw-banner{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:22px 26px;margin-bottom:14px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-.kw-label{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:4px;}
-.kw-word{font-family:'Gmarket Sans',sans-serif;font-size:24px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:10px;}
-.kw-summary{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5;max-width:460px;}
-.diff-badge{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:700;}
-
-/* 지표 */
-.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:14px;}
-.mc{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 14px;box-shadow:var(--sh);position:relative;overflow:hidden;}
-.mc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px;}
+/* ── 지표 ── */
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px;}
+.mc{background:var(--white);border:1px solid var(--border);border-radius:13px;padding:14px 13px;box-shadow:var(--sh);position:relative;overflow:hidden;}
+.mc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 13px 13px;}
 .mc.green::after{background:var(--green);}
 .mc.blue::after{background:var(--blue);}
 .mc.orange::after{background:var(--orange);}
 .mc.red::after{background:var(--red);}
 .mc.gold::after{background:var(--gold);}
-.mc-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:7px;}
-.mc-val{font-family:'Gmarket Sans',sans-serif;font-size:22px;font-weight:700;line-height:1;margin-bottom:3px;}
+.mc-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;}
+.mc-val{font-family:'Gmarket Sans',sans-serif;font-size:20px;font-weight:700;line-height:1;margin-bottom:3px;}
 .mc-val.green{color:var(--green);}
 .mc-val.blue{color:var(--blue);}
 .mc-val.orange{color:var(--orange);}
 .mc-val.red{color:var(--red);}
 .mc-val.gold{color:var(--gold);}
 .mc-sub{font-size:11px;color:var(--dim);}
-.real-tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;background:var(--greenBg);color:var(--green2);font-weight:700;margin-left:4px;vertical-align:middle;}
-.ai-tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;background:var(--blueBg);color:var(--blue);font-weight:700;margin-left:4px;vertical-align:middle;}
-.gauge{height:5px;background:var(--border);border-radius:3px;margin-top:7px;overflow:hidden;}
+.real-tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;background:var(--greenBg);color:var(--green2);font-weight:700;margin-left:3px;vertical-align:middle;}
+.ai-tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;background:var(--blueBg);color:var(--blue);font-weight:700;margin-left:3px;vertical-align:middle;}
+.gauge{height:4px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden;}
 .gauge-fill{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+.device-split{display:flex;gap:7px;margin-top:7px;}
+.device-item{flex:1;padding:7px 9px;background:var(--surface);border:1px solid var(--border);border-radius:7px;text-align:center;}
+.device-lbl{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:2px;}
+.device-val{font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;}
 
-/* 카드 공통 */
-.card{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--sh);}
-.card-head{padding:13px 17px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.card-title{font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
+/* ── 카드 ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:13px;overflow:hidden;box-shadow:var(--sh);}
+.card-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px;}
 .sec-badge{font-size:10px;padding:2px 8px;border-radius:100px;background:var(--greenBg);color:var(--green2);font-weight:700;}
-.card-body{padding:14px 17px;}
-.col2{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px;}
-.col3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:13px;}
+.card-body{padding:13px 16px;}
+.col2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px;}
+.col3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-bottom:11px;}
 
-/* 황금 키워드 */
-.gkw{display:flex;flex-direction:column;gap:7px;}
-.gkw-row{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--surface);border:1px solid var(--border);border-radius:9px;cursor:pointer;transition:all .15s;}
+/* ── 황금 키워드 ── */
+.gkw{display:flex;flex-direction:column;gap:6px;}
+.gkw-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;}
 .gkw-row:hover{border-color:var(--green);background:var(--greenBg);}
-.gkw-rank{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);min-width:18px;}
+.gkw-rank{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);min-width:16px;}
 .gkw-rank.top{color:var(--gold);font-weight:700;}
 .gkw-word{flex:1;font-size:13px;font-weight:500;}
-.gkw-word:hover{color:var(--green);}
-.tag{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700;}
+.tag{font-size:10px;padding:2px 6px;border-radius:5px;font-weight:700;}
 .tag-g{background:var(--greenBg);color:var(--green2);}
 .tag-r{background:var(--redBg);color:var(--red);}
 .tag-b{background:var(--blueBg);color:var(--blue);}
 .tag-o{background:var(--orangeBg);color:var(--orange);}
 .tag-gold{background:var(--goldBg);color:var(--gold);}
 .gkw-score{font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;color:var(--green);}
-.top20-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:var(--surface);border:1.5px dashed var(--border2);border-radius:9px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s;margin-top:10px;font-family:'Noto Sans KR',sans-serif;}
+.top20-btn{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:9px;background:var(--surface);border:1.5px dashed var(--border2);border-radius:8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;margin-top:9px;font-family:'Noto Sans KR',sans-serif;}
 .top20-btn:hover{border-color:var(--green);color:var(--green);background:var(--greenBg);}
 
-/* 연관 키워드 */
-.rkw-wrap{display:flex;flex-wrap:wrap;gap:7px;}
-.rkw{display:flex;align-items:center;gap:5px;padding:6px 11px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;transition:all .15s;}
+/* ── 연관 키워드 ── */
+.rkw-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+.rkw{display:flex;align-items:center;gap:4px;padding:5px 10px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:12px;cursor:pointer;transition:all .15s;}
 .rkw:hover{border-color:var(--green);color:var(--green);}
 .rkw-vol{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);}
 
-/* PC/모바일 분리 */
-.device-split{display:flex;gap:8px;margin-top:8px;}
-.device-item{flex:1;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;text-align:center;}
-.device-lbl{font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:3px;}
-.device-val{font-family:'Gmarket Sans',sans-serif;font-size:15px;font-weight:700;}
-
-/* 상위노출 분석 */
-.exposure-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.exp-item{padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:9px;}
-.exp-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:4px;}
-.exp-val{font-family:'Gmarket Sans',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
-.exp-sub{font-size:11px;color:var(--muted);margin-top:2px;}
-.checklist{display:flex;flex-direction:column;gap:7px;}
-.chk-item{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;}
+/* ── 상위노출 ── */
+.exposure-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.exp-item{padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;}
+.exp-label{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);margin-bottom:3px;}
+.exp-val{font-family:'Gmarket Sans',sans-serif;font-size:15px;font-weight:700;}
+.exp-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.checklist{display:flex;flex-direction:column;gap:6px;}
+.chk-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:12px;}
 .chk-icon{font-size:13px;flex-shrink:0;}
 .chk-txt{flex:1;line-height:1.4;}
-.chk-score{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700;}
+.chk-score{font-size:10px;padding:2px 6px;border-radius:5px;font-weight:700;}
 
-/* 발행 타이밍 */
-.timing-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+/* ── 타이밍 ── */
+.timing-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
 .timing-day{text-align:center;}
-.timing-label{font-size:10px;color:var(--dim);font-weight:700;padding:4px 0;}
-.timing-bar-wrap{height:56px;display:flex;align-items:flex-end;justify-content:center;}
-.timing-bar{width:100%;border-radius:4px 4px 0 0;transition:height 1s ease;min-height:4px;}
-.timing-val{font-size:9px;font-family:'DM Mono',monospace;color:var(--dim);text-align:center;margin-top:3px;}
+.timing-label{font-size:10px;color:var(--dim);font-weight:700;padding:3px 0;}
+.timing-bar-wrap{height:50px;display:flex;align-items:flex-end;justify-content:center;}
+.timing-bar{width:100%;border-radius:3px 3px 0 0;min-height:4px;}
+.timing-val{font-size:9px;font-family:'DM Mono',monospace;color:var(--dim);text-align:center;margin-top:2px;}
 
-/* 트렌드 */
-.trend-svg-wrap{height:70px;margin-top:5px;}
-.series-list{display:flex;flex-direction:column;gap:7px;}
-.series-item{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;}
-.series-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--green);font-weight:700;min-width:20px;padding-top:1px;}
-.series-title{font-size:12px;font-weight:500;margin-bottom:2px;}
-.series-sub{font-size:11px;color:var(--muted);}
+/* ── 트렌드 ── */
+.trend-svg-wrap{height:65px;margin-top:4px;}
 
-/* 제목 생성 */
-.title-list{display:flex;flex-direction:column;gap:6px;}
-.title-item{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;}
-.title-item:hover{border-color:var(--green);background:var(--greenBg);}
-.ti-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);min-width:16px;padding-top:2px;}
-.ti-text{flex:1;font-size:12px;line-height:1.5;font-weight:500;}
-.ti-copy{font-size:10px;color:var(--dim);transition:color .15s;padding-top:2px;white-space:nowrap;}
-.title-item:hover .ti-copy{color:var(--green);}
+/* ── 이슈성/정보성/상업성 ── */
+.intent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px;}
+.intent-item{padding:10px 9px;background:var(--surface);border:1px solid var(--border);border-radius:9px;text-align:center;}
+.intent-label{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:4px;}
+.intent-score{font-family:'Gmarket Sans',sans-serif;font-size:19px;font-weight:700;margin-bottom:3px;}
+.intent-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:3px;}
+.intent-bar-fill{height:100%;border-radius:2px;}
+.intent-desc{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4;}
 
-/* 글쓰기 */
-.write-tabs{display:flex;gap:4px;margin-bottom:11px;}
-.wtab{padding:7px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);font-family:'Noto Sans KR',sans-serif;color:var(--muted);transition:all .15s;}
+/* ── 타겟 독자 ── */
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.demo-item{padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:9px;}
+.demo-lbl{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);margin-bottom:7px;}
+.gender-bars{display:flex;gap:5px;align-items:flex-end;height:42px;}
+.g-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.g-bar{width:100%;border-radius:3px 3px 0 0;}
+.g-lbl{font-size:9px;color:var(--dim);font-weight:700;}
+.g-val{font-size:10px;font-family:'DM Mono',monospace;}
+.age-bars{display:flex;gap:3px;align-items:flex-end;height:42px;}
+.age-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.age-bar{width:100%;border-radius:2px 2px 0 0;}
+.age-lbl{font-size:8px;color:var(--dim);}
+.age-val{font-size:9px;font-family:'DM Mono',monospace;}
+
+/* ── 복수 키워드 비교 ── */
+.compare-table{width:100%;border-collapse:collapse;font-size:12px;}
+.compare-table th{padding:8px 10px;background:var(--surface);border-bottom:2px solid var(--border);text-align:left;font-weight:700;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);}
+.compare-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.compare-table tr:last-child td{border-bottom:none;}
+.compare-table tr:hover td{background:var(--surface);}
+.cmp-kw{font-weight:600;font-size:13px;}
+.cmp-winner{background:var(--greenBg)!important;}
+.cmp-bar-cell{min-width:80px;}
+.cmp-mini-bar{height:6px;background:var(--green);border-radius:3px;}
+
+/* ── 제목 SEO 체커 ── */
+.title-checker{display:flex;gap:6px;margin-bottom:9px;}
+.title-checker-input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;color:var(--ink);}
+.title-checker-input:focus{border-color:var(--green);}
+.title-check-btn{padding:9px 14px;background:var(--green);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;}
+.seo-score-wrap{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:9px;margin-bottom:9px;}
+.seo-score-circle{width:52px;height:52px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Gmarket Sans',sans-serif;font-weight:700;flex-shrink:0;}
+.seo-score-num{font-size:19px;line-height:1;}
+.seo-score-txt{font-size:9px;margin-top:1px;}
+.seo-checks{display:flex;flex-direction:column;gap:4px;flex:1;}
+.seo-check-item{display:flex;align-items:center;gap:5px;font-size:11px;}
+
+/* ── SNS 변환 ── */
+.sns-tabs{display:flex;gap:4px;margin-bottom:9px;}
+.sns-tab{padding:6px 11px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Noto Sans KR',sans-serif;}
+.sns-tab.active{background:var(--purple);color:white;border-color:var(--purple);}
+.sns-content{display:none;}
+.sns-content.active{display:block;}
+.sns-output{font-size:12px;line-height:1.9;color:var(--ink2);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px;min-height:130px;max-height:260px;overflow-y:auto;white-space:pre-wrap;scrollbar-width:thin;}
+
+/* ── 글쓰기 ── */
+.write-tabs{display:flex;gap:4px;margin-bottom:9px;}
+.wtab{padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Noto Sans KR',sans-serif;}
 .wtab.active{background:var(--green);color:white;border-color:var(--green);}
 .wc{display:none;}
 .wc.active{display:block;}
-.write-output{font-size:12px;line-height:1.95;color:var(--ink2);background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:16px;min-height:180px;max-height:380px;overflow-y:auto;scrollbar-width:thin;white-space:pre-wrap;}
-.write-acts{display:flex;gap:7px;margin-top:9px;}
-.wbtn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1.5px solid var(--border);background:var(--surface);color:var(--ink2);transition:all .15s;}
+.write-output{font-size:12px;line-height:1.9;color:var(--ink2);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-height:160px;max-height:340px;overflow-y:auto;scrollbar-width:thin;white-space:pre-wrap;}
+.write-acts{display:flex;gap:6px;margin-top:8px;}
+.wbtn{padding:7px 13px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1.5px solid var(--border);background:var(--surface);color:var(--ink2);}
 .wbtn:hover{border-color:var(--green);color:var(--green);}
 .wbtn.primary{background:var(--green);color:white;border-color:var(--green);}
 .wbtn.primary:hover{background:var(--green2);}
 
-/* 수익화 */
-.revenue-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
-.rev-card{padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:11px;}
-.rev-card-top{display:flex;align-items:center;gap:7px;margin-bottom:9px;}
-.rev-icon{font-size:18px;}
-.rev-name{font-size:12px;font-weight:700;}
-.rev-badge{font-size:10px;padding:2px 7px;border-radius:100px;font-weight:700;margin-left:auto;}
-.rev-amount{font-family:'Gmarket Sans',sans-serif;font-size:20px;font-weight:700;margin-bottom:3px;}
-.rev-desc{font-size:11px;color:var(--muted);line-height:1.5;}
-.rev-kws{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
-.rev-kw{font-size:10px;padding:2px 8px;border-radius:5px;background:var(--border);color:var(--muted);}
+/* ── 제목 목록 ── */
+.title-list{display:flex;flex-direction:column;gap:5px;}
+.title-item{display:flex;align-items:flex-start;gap:7px;padding:8px 11px;background:var(--surface);border:1px solid var(--border);border-radius:7px;cursor:pointer;}
+.title-item:hover{border-color:var(--green);background:var(--greenBg);}
+.ti-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);min-width:14px;padding-top:2px;}
+.ti-text{flex:1;font-size:12px;line-height:1.5;font-weight:500;}
+.ti-copy{font-size:10px;color:var(--dim);padding-top:2px;white-space:nowrap;}
 
-/* 모달 */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;padding:20px;}
+/* ── 모달 ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;padding:18px;}
 .modal-overlay.show{display:flex;animation:fadeIn .2s ease;}
-.modal{background:var(--white);border-radius:18px;width:100%;max-width:720px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.18);animation:slideUp .25s ease;}
-.modal.wide{max-width:860px;}
-@keyframes slideUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
-.modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.modal-title{font-family:'Gmarket Sans',sans-serif;font-size:16px;font-weight:700;display:flex;align-items:center;gap:7px;}
+.modal{background:var(--white);border-radius:16px;width:100%;max-width:700px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.18);}
+.modal.wide{max-width:840px;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-title{font-family:'Gmarket Sans',sans-serif;font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .modal-kw{color:var(--green);}
-.modal-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);transition:all .15s;}
-.modal-close:hover{background:var(--border);}
-.modal-body{padding:18px 22px;overflow-y:auto;scrollbar-width:thin;}
-.modal-spin-wrap{display:flex;flex-direction:column;align-items:center;padding:36px;gap:12px;}
-.modal-spin{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
-
-/* 키워드 상세 */
-.kd-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px;}
-.kd-mc{padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:11px;text-align:center;}
-.kd-mc-lbl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:5px;}
-.kd-mc-val{font-family:'Gmarket Sans',sans-serif;font-size:19px;font-weight:700;}
+.modal-close{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);}
+.modal-body{padding:16px 20px;overflow-y:auto;scrollbar-width:thin;}
+.modal-spin-wrap{display:flex;flex-direction:column;align-items:center;padding:32px;gap:10px;}
+.modal-spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
+.kd-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.kd-mc{padding:11px;background:var(--surface);border:1px solid var(--border);border-radius:10px;text-align:center;}
+.kd-mc-lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:4px;}
+.kd-mc-val{font-family:'Gmarket Sans',sans-serif;font-size:18px;font-weight:700;}
 .kd-mc-sub{font-size:10px;color:var(--muted);margin-top:2px;}
-.kd-section{margin-bottom:14px;}
-.kd-sec-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;border-left:3px solid var(--green);padding-left:7px;}
+.kd-section{margin-bottom:13px;}
+.kd-sec-title{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;border-left:3px solid var(--green);padding-left:6px;}
 .kd-text{font-size:12px;line-height:1.75;color:var(--ink2);}
 .kd-text strong{color:var(--ink);font-weight:700;}
-.kd-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;}
-.kd-tag{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:600;background:var(--greenBg);color:var(--green2);border:1px solid var(--greenBorder);}
-.kd-titles{display:flex;flex-direction:column;gap:5px;}
-.kd-title-item{display:flex;align-items:flex-start;gap:7px;padding:8px 11px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;font-size:12px;}
+.kd-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.kd-tag{padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:var(--greenBg);color:var(--green2);border:1px solid var(--greenBorder);}
+.kd-titles{display:flex;flex-direction:column;gap:4px;}
+.kd-title-item{display:flex;align-items:flex-start;gap:6px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:12px;}
 .kd-title-item:hover{border-color:var(--green);background:var(--greenBg);}
-
-/* TOP 20 */
-.top20-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.top20-pattern{margin-bottom:14px;padding:12px;background:var(--goldBg);border:1px solid var(--goldBorder);border-radius:9px;}
-.top20-pattern-title{font-size:11px;font-weight:700;color:var(--gold);margin-bottom:5px;}
+.top20-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px;}
+.top20-pattern{margin-bottom:12px;padding:11px;background:var(--goldBg);border:1px solid var(--goldBorder);border-radius:8px;}
+.top20-pattern-title{font-size:11px;font-weight:700;color:var(--gold);margin-bottom:4px;}
 .top20-pattern-text{font-size:12px;color:var(--ink2);line-height:1.65;}
-.top20-header{display:grid;grid-template-columns:36px 1fr 70px 58px 58px 50px;gap:7px;padding:7px 11px;background:var(--surface);border:1px solid var(--border);border-radius:7px 7px 0 0;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);}
-.top20-list{border:1px solid var(--border);border-top:none;border-radius:0 0 7px 7px;overflow:hidden;}
-.top20-row{display:grid;grid-template-columns:36px 1fr 70px 58px 58px 50px;gap:7px;padding:9px 11px;border-bottom:1px solid var(--border);transition:background .15s;align-items:center;}
+.top20-header{display:grid;grid-template-columns:34px 1fr 68px 56px 56px 48px;gap:6px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px 6px 0 0;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--dim);}
+.top20-list{border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;overflow:hidden;}
+.top20-row{display:grid;grid-template-columns:34px 1fr 68px 56px 56px 48px;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border);align-items:center;}
 .top20-row:last-child{border-bottom:none;}
 .top20-row:hover{background:var(--surface);}
 .t20-rank{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;text-align:center;}
 .t20-rank.r1{color:var(--gold);}
 .t20-rank.r2{color:var(--dim);}
 .t20-rank.r3{color:var(--orange);}
-.t20-title{font-size:12px;line-height:1.4;font-weight:500;}
+.t20-title{font-size:12px;line-height:1.4;}
 .t20-title .kh{color:var(--green);font-weight:700;}
 .t20-words,.t20-views{font-family:'DM Mono',monospace;font-size:11px;text-align:center;color:var(--blue);}
-.t20-imgs{font-size:11px;text-align:center;color:var(--ink2);}
+.t20-imgs{font-size:11px;text-align:center;}
 .t20-age{font-size:11px;text-align:center;}
-.age-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;}
+.age-badge{display:inline-block;padding:2px 5px;border-radius:3px;font-size:10px;font-weight:700;}
 .age-new{background:var(--greenBg);color:var(--green2);}
 .age-old{background:var(--orangeBg);color:var(--orange);}
 
-@media(max-width:780px){.metrics{grid-template-columns:repeat(2,1fr);}.col2,.col3{grid-template-columns:1fr;}.revenue-grid{grid-template-columns:1fr;}header{padding:0 14px;}.hero{padding:34px 14px 24px;}.result{padding:0 12px 60px;}.groq-in{width:120px;}}
-
-/* ── 이슈성/정보성/상업성 ── */
-.intent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
-.intent-item{padding:11px 10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;text-align:center;}
-.intent-label{font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:5px;}
-.intent-score{font-family:'Gmarket Sans',sans-serif;font-size:20px;font-weight:700;margin-bottom:3px;}
-.intent-bar{height:4px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px;}
-.intent-bar-fill{height:100%;border-radius:3px;}
-.intent-desc{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4;}
-
-/* ── 성별/연령 ── */
-.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.demo-item{padding:11px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
-.demo-lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;}
-.gender-bars{display:flex;gap:6px;align-items:flex-end;height:44px;}
-.g-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
-.g-bar{width:100%;border-radius:4px 4px 0 0;transition:height 1s ease;}
-.g-lbl{font-size:9px;color:var(--dim);font-weight:700;}
-.g-val{font-size:10px;font-family:'DM Mono',monospace;color:var(--ink2);}
-.age-bars{display:flex;gap:4px;align-items:flex-end;height:44px;}
-.age-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.age-bar{width:100%;border-radius:3px 3px 0 0;transition:height 1s ease;}
-.age-lbl{font-size:8px;color:var(--dim);}
-.age-val{font-size:9px;font-family:'DM Mono',monospace;color:var(--ink2);}
-
-/* ── SNS 변환 ── */
-.sns-tabs{display:flex;gap:4px;margin-bottom:10px;}
-.sns-tab{padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);font-family:'Noto Sans KR',sans-serif;color:var(--muted);transition:all .15s;}
-.sns-tab.active{background:var(--purple);color:white;border-color:var(--purple);}
-.sns-content{display:none;}
-.sns-content.active{display:block;}
-.sns-output{font-size:12px;line-height:1.9;color:var(--ink2);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-height:140px;max-height:280px;overflow-y:auto;white-space:pre-wrap;scrollbar-width:thin;}
-
-/* ── 제목 SEO 체커 ── */
-.title-checker{display:flex;gap:7px;margin-bottom:10px;}
-.title-checker-input{flex:1;padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;color:var(--ink);}
-.title-checker-input:focus{border-color:var(--green);}
-.title-check-btn{padding:9px 16px;background:var(--green);color:white;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;}
-.title-check-btn:hover{background:var(--green2);}
-.seo-score-wrap{display:flex;align-items:center;gap:14px;padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;}
-.seo-score-circle{width:56px;height:56px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Gmarket Sans',sans-serif;font-weight:700;flex-shrink:0;}
-.seo-score-num{font-size:20px;line-height:1;}
-.seo-score-txt{font-size:9px;margin-top:1px;}
-.seo-checks{display:flex;flex-direction:column;gap:5px;flex:1;}
-.seo-check-item{display:flex;align-items:center;gap:6px;font-size:11px;}
-.seo-check-icon{font-size:12px;flex-shrink:0;}
-
+@media(max-width:780px){
+  .metrics{grid-template-columns:repeat(2,1fr);}
+  .col2,.col3{grid-template-columns:1fr;}
+  header{padding:0 14px;}
+  .hero{padding:30px 14px 22px;}
+  .result{padding:0 10px 60px;}
+  .groq-in{width:110px;}
+}
 </style>
 </head>
 <body>
@@ -338,24 +324,19 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
       <div class="groq-dot" id="groqDot"></div>
     </div>
     <button class="key-btn" onclick="openKeyPanel()">
-      <div class="key-dot" id="naverDot"></div>
-      네이버 API 설정
+      <div class="key-dot" id="naverDot"></div>네이버 API
     </button>
   </div>
 </header>
 
-<!-- 네이버 API 키 설정 패널 -->
 <div class="key-panel" id="keyPanel">
   <div class="key-box">
-    <h2>🔑 네이버 검색광고 API 키 설정</h2>
-    <p>searchad.naver.com → 도구 → API 사용 관리에서 발급받은 키를 입력해주세요.<br>키는 브라우저에만 저장되며 외부로 전송되지 않습니다.</p>
-    <div class="key-field"><label>Access License (API 키)</label><input type="password" id="naverApiKey" placeholder="긴 문자열 입력..."></div>
-    <div class="key-field"><label>Secret Key (시크릿 키)</label><input type="password" id="naverSecret" placeholder="긴 문자열 입력..."></div>
-    <div class="key-field"><label>Customer ID (고객 ID)</label><input type="text" id="naverCustomer" placeholder="숫자 입력..."></div>
-    <div class="key-guide">
-      💡 API 사용 관리 화면에서 <strong>Access License</strong>, <strong>Secret Key</strong>, <strong>고객 ID</strong>(화면 상단 계정번호)를 확인하세요.<br>
-      <a href="https://searchad.naver.com" target="_blank">→ 네이버 검색광고 바로가기</a>
-    </div>
+    <h2>🔑 네이버 검색광고 API</h2>
+    <p>searchad.naver.com → 도구 → API 사용 관리에서 발급받은 키를 입력해주세요.</p>
+    <div class="key-field"><label>Access License</label><input type="password" id="naverApiKey" placeholder="0100000000..."></div>
+    <div class="key-field"><label>Secret Key</label><input type="password" id="naverSecret" placeholder="AQAAAA..."></div>
+    <div class="key-field"><label>Customer ID</label><input type="text" id="naverCustomer" placeholder="숫자..."></div>
+    <div class="key-guide">💡 <a href="https://searchad.naver.com" target="_blank">네이버 검색광고</a> → 도구 → API 사용 관리에서 확인하세요.</div>
     <div class="key-actions">
       <button class="key-cancel" onclick="closeKeyPanel()">취소</button>
       <button class="key-save" onclick="saveKeys()">저장하기</button>
@@ -363,54 +344,56 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
   </div>
 </div>
 
-<!-- 키워드 상세 모달 -->
 <div class="modal-overlay" id="kwModal" onclick="closeModalOverlay(event,'kwModal')">
   <div class="modal">
     <div class="modal-head">
       <div class="modal-title">🔍 키워드 상세: <span class="modal-kw" id="modalKw"></span></div>
       <div class="modal-close" onclick="closeModal('kwModal')">✕</div>
     </div>
-    <div class="modal-body" id="modalBody">
-      <div class="modal-spin-wrap"><div class="modal-spin"></div><span style="font-size:12px;color:var(--muted)">분석 중...</span></div>
-    </div>
+    <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
 
-<!-- TOP 20 모달 -->
 <div class="modal-overlay" id="top20Modal" onclick="closeModalOverlay(event,'top20Modal')">
   <div class="modal wide">
     <div class="modal-head">
       <div class="modal-title">🏆 상위노출 블로그 TOP 20: <span class="modal-kw" id="top20Kw"></span></div>
       <div class="modal-close" onclick="closeModal('top20Modal')">✕</div>
     </div>
-    <div class="modal-body" id="top20Body">
-      <div class="modal-spin-wrap"><div class="modal-spin"></div><span style="font-size:12px;color:var(--muted)">분석 중...</span></div>
-    </div>
+    <div class="modal-body" id="top20Body"></div>
   </div>
 </div>
 
 <div class="hero">
-  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px;">
-    <div class="hero-tag">✦ 네이버 블로그 전문 분석기</div>
-    <div class="hero-tag real-badge">📡 실제 데이터 연동</div>
+  <h1>블로그 키워드 하나로<br><em>상위노출 + 마케팅</em>까지</h1>
+  <p>네이버 검색광고 API 실제 데이터 + AI 분석<br>황금키워드 발굴 · 타겟 분석 · SNS 콘텐츠 자동 생성</p>
+  <div class="search-box">
+    <input type="text" id="kwInput" placeholder="키워드를 입력하세요 (예: 연산동 맛집)" onkeydown="if(event.key==='Enter')go()">
+    <button class="search-btn" id="searchBtn" onclick="go()">분석하기</button>
   </div>
-  <h1>블로그 키워드 하나로<br><em>상위노출 + 수익화</em>까지</h1>
-  <p>네이버 검색광고 API 실제 검색량 데이터 + AI 전략 분석<br>황금키워드 발굴부터 자동 글쓰기, 수익화 전략까지</p>
-  <div class="search-wrap">
-    <div class="search-box">
-      <input type="text" id="kwInput" placeholder="키워드를 입력하세요 (예: 연산동 고기집)" onkeydown="if(event.key==='Enter')go()">
-      <button class="search-btn" id="searchBtn" onclick="go()">분석하기</button>
-    </div>
-    <div class="ex-chips">
-      <span class="ec" onclick="sk('타로 부업')">타로 부업</span>
-      <span class="ec" onclick="sk('다이어트 식단')">다이어트 식단</span>
-      <span class="ec" onclick="sk('재테크 부업')">재테크 부업</span>
-      <span class="ec" onclick="sk('인테리어 소품')">인테리어 소품</span>
-      <span class="ec" onclick="sk('제주도 카페')">제주도 카페</span>
-    </div>
-    <div class="data-source">
-      <span class="ds-badge ds-real">📡 네이버 API: 검색량·경쟁도·연관키워드</span>
-      <span class="ds-badge ds-ai">🤖 AI: 전략·제목·글쓰기·수익화</span>
+  <div class="ex-chips">
+    <span class="ec" onclick="sk('타로 부업')">타로 부업</span>
+    <span class="ec" onclick="sk('다이어트 식단')">다이어트 식단</span>
+    <span class="ec" onclick="sk('재테크 부업')">재테크 부업</span>
+    <span class="ec" onclick="sk('인테리어 소품')">인테리어 소품</span>
+    <span class="ec" onclick="sk('제주도 카페')">제주도 카페</span>
+  </div>
+  <div class="ds-row">
+    <span class="ds">📡 네이버 API: 실제 검색량·경쟁도</span>
+    <span class="ds ai">🤖 AI: 전략·분석·글쓰기·SNS</span>
+  </div>
+</div>
+
+<div class="compare-wrap">
+  <label class="compare-toggle">
+    <input type="checkbox" id="cmpToggle" onchange="toggleCompare()"> 복수 키워드 비교 모드
+  </label>
+  <div class="compare-inputs" id="cmpInputs">
+    <div class="cmp-row">
+      <input class="cmp-input" id="cmpKw1" placeholder="키워드 1">
+      <input class="cmp-input" id="cmpKw2" placeholder="키워드 2">
+      <input class="cmp-input" id="cmpKw3" placeholder="키워드 3 (선택)">
+      <button class="cmp-btn" onclick="runCompare()">비교하기</button>
     </div>
   </div>
 </div>
@@ -418,13 +401,13 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
 <div class="err" id="err"></div>
 <div class="loading" id="loading">
   <div class="loader"></div>
-  <div class="load-txt" id="loadTxt">키워드 분석 중...</div>
+  <div class="load-txt" id="loadTxt">분석 중...</div>
   <div class="load-steps">
-    <div class="lstep" id="s1"><div class="ldot"></div> 네이버 검색량 조회</div>
-    <div class="lstep" id="s2"><div class="ldot"></div> 연관키워드 수집</div>
-    <div class="lstep" id="s3"><div class="ldot"></div> AI 전략 분석</div>
-    <div class="lstep" id="s4"><div class="ldot"></div> 콘텐츠 생성</div>
-    <div class="lstep" id="s5"><div class="ldot"></div> 수익화 분석</div>
+    <div class="lstep" id="s1"><div class="ldot"></div> 검색량 조회</div>
+    <div class="lstep" id="s2"><div class="ldot"></div> 연관키워드</div>
+    <div class="lstep" id="s3"><div class="ldot"></div> AI 전략</div>
+    <div class="lstep" id="s4"><div class="ldot"></div> 콘텐츠</div>
+    <div class="lstep" id="s5"><div class="ldot"></div> 타겟·SNS</div>
   </div>
 </div>
 
@@ -438,8 +421,13 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
     <div class="diff-badge" id="rDiff"></div>
   </div>
 
-  <!-- 지표: PC검색 + 모바일검색 + 경쟁도 + CPC + 상위글나이 -->
   <div class="metrics" id="metricsGrid"></div>
+
+  <!-- 비교 결과 (비교 모드일 때만) -->
+  <div class="card" style="margin-bottom:11px;display:none;" id="compareCard">
+    <div class="card-head"><div class="card-title">📊 키워드 비교 분석</div></div>
+    <div class="card-body" id="compareBody"></div>
+  </div>
 
   <div class="col2">
     <div class="card">
@@ -474,23 +462,23 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
 
   <div class="col3">
     <div class="card">
-      <div class="card-head"><div class="card-title">📅 최적 발행 타이밍</div></div>
+      <div class="card-head"><div class="card-title">📅 발행 타이밍</div></div>
       <div class="card-body">
         <div class="timing-grid" id="timingGrid"></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:9px;" id="timingDesc"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;" id="timingDesc"></div>
       </div>
     </div>
     <div class="card">
-      <div class="card-head"><div class="card-title">📈 검색 트렌드 <span class="real-tag">실제데이터</span></div></div>
+      <div class="card-head"><div class="card-title">📈 검색 트렌드 <span class="real-tag">실제</span></div></div>
       <div class="card-body">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;" id="trendDesc"></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="trendDesc"></div>
         <div class="trend-svg-wrap" id="trendChart"></div>
       </div>
     </div>
     <div class="card">
       <div class="card-head">
-        <div class="card-title">🎯 키워드 성격 분석</div>
-        <span class="ai-tag" style="font-size:10px;padding:2px 8px;">AI</span>
+        <div class="card-title">🎯 키워드 성격</div>
+        <span class="ai-tag" style="font-size:10px;padding:2px 7px;">AI</span>
       </div>
       <div class="card-body">
         <div class="intent-grid" id="intentGrid"></div>
@@ -499,21 +487,21 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
     </div>
   </div>
 
-  <div class="col2" style="margin-bottom:13px;">
+  <div class="col2" style="margin-bottom:11px;">
     <div class="card">
       <div class="card-head">
         <div class="card-title">👥 타겟 독자 분석</div>
-        <span class="ai-tag" style="font-size:10px;padding:2px 8px;">AI추정</span>
+        <span class="ai-tag" style="font-size:10px;padding:2px 7px;">AI추정</span>
       </div>
       <div class="card-body">
         <div class="demo-grid" id="demoGrid"></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:9px;line-height:1.6;" id="demoDesc"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;" id="demoDesc"></div>
       </div>
     </div>
     <div class="card">
       <div class="card-head">
         <div class="card-title">✏️ 제목 SEO 점수</div>
-        <span class="sec-badge">실시간 체크</span>
+        <span class="sec-badge">실시간</span>
       </div>
       <div class="card-body">
         <div class="title-checker">
@@ -525,272 +513,222 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:13px;">
+  <div class="card" style="margin-bottom:11px;">
     <div class="card-head">
-      <div class="card-title">✍️ SEO 최적화 제목 생성</div>
+      <div class="card-title">✍️ SEO 제목 생성</div>
       <span class="sec-badge">클릭 복사</span>
     </div>
     <div class="card-body"><div class="title-list" id="titleList"></div></div>
   </div>
 
-  <div class="card" style="margin-bottom:13px;">
-    <div class="card-head">
-      <div class="card-title">🤖 자동 글쓰기</div>
-      <span style="font-size:11px;color:var(--muted);">AI 초안</span>
-    </div>
-    <div class="card-body">
-      <div class="write-tabs">
-        <button class="wtab active" onclick="swW('full',this)">📝 블로그 포스팅</button>
-        <button class="wtab" onclick="swW('hook',this)">🎣 도입부 후킹</button>
-        <button class="wtab" onclick="swW('outline',this)">📋 소제목 구조</button>
+  <div class="col2" style="margin-bottom:11px;">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">🤖 자동 글쓰기</div>
+        <span style="font-size:11px;color:var(--muted);">AI 초안</span>
       </div>
-      <div class="wc active" id="wc-full">
-        <div class="write-output" id="wo-full">분석 완료 후 표시됩니다...</div>
-        <div class="write-acts"><button class="wbtn primary" onclick="cpWrite('full')">복사하기</button><button class="wbtn" onclick="regenW('full')">다시 생성</button></div>
-      </div>
-      <div class="wc" id="wc-hook">
-        <div class="write-output" id="wo-hook">재생성 버튼을 눌러주세요</div>
-        <div class="write-acts"><button class="wbtn primary" onclick="cpWrite('hook')">복사하기</button><button class="wbtn" onclick="regenW('hook')">다시 생성</button></div>
-      </div>
-      <div class="wc" id="wc-outline">
-        <div class="write-output" id="wo-outline">재생성 버튼을 눌러주세요</div>
-        <div class="write-acts"><button class="wbtn primary" onclick="cpWrite('outline')">복사하기</button><button class="wbtn" onclick="regenW('outline')">다시 생성</button></div>
-      </div>
-    </div>
-  </div>
-</div>
-</div>
-
-  <div class="card" style="margin-bottom:13px;">
-    <div class="card-head">
-      <div class="card-title">📱 SNS 콘텐츠 변환</div>
-      <span class="sec-badge" style="background:var(--purpleBg);color:var(--purple);">인스타/스레드</span>
-    </div>
-    <div class="card-body">
-      <div class="sns-tabs">
-        <button class="sns-tab active" onclick="swSNS('insta',this)">📸 인스타 캡션</button>
-        <button class="sns-tab" onclick="swSNS('reels',this)">🎬 릴스 스크립트</button>
-        <button class="sns-tab" onclick="swSNS('threads',this)">🧵 스레드</button>
-      </div>
-      <div class="sns-content active" id="sns-insta">
-        <div class="sns-output" id="sno-insta">분석 완료 후 생성됩니다...</div>
-        <div class="write-acts" style="margin-top:8px;">
-          <button class="wbtn primary" onclick="cpSNS('insta')">복사하기</button>
-          <button class="wbtn" onclick="regenSNS('insta')">다시 생성</button>
+      <div class="card-body">
+        <div class="write-tabs">
+          <button class="wtab active" onclick="swW('full',this)">📝 블로그</button>
+          <button class="wtab" onclick="swW('hook',this)">🎣 도입부</button>
+          <button class="wtab" onclick="swW('outline',this)">📋 소제목</button>
+        </div>
+        <div class="wc active" id="wc-full">
+          <div class="write-output" id="wo-full">분석 완료 후 표시됩니다...</div>
+          <div class="write-acts"><button class="wbtn primary" onclick="cpWrite('full')">복사</button><button class="wbtn" onclick="regenW('full')">다시 생성</button></div>
+        </div>
+        <div class="wc" id="wc-hook">
+          <div class="write-output" id="wo-hook">재생성 버튼을 눌러주세요</div>
+          <div class="write-acts"><button class="wbtn primary" onclick="cpWrite('hook')">복사</button><button class="wbtn" onclick="regenW('hook')">다시 생성</button></div>
+        </div>
+        <div class="wc" id="wc-outline">
+          <div class="write-output" id="wo-outline">재생성 버튼을 눌러주세요</div>
+          <div class="write-acts"><button class="wbtn primary" onclick="cpWrite('outline')">복사</button><button class="wbtn" onclick="regenW('outline')">다시 생성</button></div>
         </div>
       </div>
-      <div class="sns-content" id="sns-reels">
-        <div class="sns-output" id="sno-reels">재생성 버튼을 눌러주세요</div>
-        <div class="write-acts" style="margin-top:8px;">
-          <button class="wbtn primary" onclick="cpSNS('reels')">복사하기</button>
-          <button class="wbtn" onclick="regenSNS('reels')">다시 생성</button>
-        </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">📱 SNS 콘텐츠 변환</div>
+        <span class="sec-badge" style="background:var(--purpleBg);color:var(--purple);">인스타·스레드</span>
       </div>
-      <div class="sns-content" id="sns-threads">
-        <div class="sns-output" id="sno-threads">재생성 버튼을 눌러주세요</div>
-        <div class="write-acts" style="margin-top:8px;">
-          <button class="wbtn primary" onclick="cpSNS('threads')">복사하기</button>
-          <button class="wbtn" onclick="regenSNS('threads')">다시 생성</button>
+      <div class="card-body">
+        <div class="sns-tabs">
+          <button class="sns-tab active" onclick="swSNS('insta',this)">📸 인스타</button>
+          <button class="sns-tab" onclick="swSNS('reels',this)">🎬 릴스</button>
+          <button class="sns-tab" onclick="swSNS('threads',this)">🧵 스레드</button>
+        </div>
+        <div class="sns-content active" id="sns-insta">
+          <div class="sns-output" id="sno-insta">분석 후 자동 생성됩니다...</div>
+          <div class="write-acts"><button class="wbtn primary" onclick="cpSNS('insta')">복사</button><button class="wbtn" onclick="regenSNS('insta')">다시 생성</button></div>
+        </div>
+        <div class="sns-content" id="sns-reels">
+          <div class="sns-output" id="sno-reels">재생성 버튼을 눌러주세요</div>
+          <div class="write-acts"><button class="wbtn primary" onclick="cpSNS('reels')">복사</button><button class="wbtn" onclick="regenSNS('reels')">다시 생성</button></div>
+        </div>
+        <div class="sns-content" id="sns-threads">
+          <div class="sns-output" id="sno-threads">재생성 버튼을 눌러주세요</div>
+          <div class="write-acts"><button class="wbtn primary" onclick="cpSNS('threads')">복사</button><button class="wbtn" onclick="regenSNS('threads')">다시 생성</button></div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
 <script>
 // ── API 키 관리 ──
-let NK = { apiKey:'', secret:'', customerId:'' };
-let curKw = '', D = null;
-
-const groqIn = document.getElementById('groqKey');
-const groqDot = document.getElementById('groqDot');
-groqIn.addEventListener('input', () => groqDot.classList.toggle('on', groqIn.value.trim().length > 20));
-
-function gGroq() { const k = groqIn.value.trim(); if(!k) throw new Error('Groq API 키를 입력해주세요'); return k; }
-
-function openKeyPanel() { document.getElementById('keyPanel').classList.add('show'); }
-function closeKeyPanel() { document.getElementById('keyPanel').classList.remove('show'); }
-function saveKeys() {
-  NK.apiKey = document.getElementById('naverApiKey').value.trim();
-  NK.secret = document.getElementById('naverSecret').value.trim();
-  NK.customerId = document.getElementById('naverCustomer').value.trim();
-  const ok = NK.apiKey && NK.secret && NK.customerId;
-  document.getElementById('naverDot').classList.toggle('on', ok);
-  if(ok) { localStorage.setItem('nk', JSON.stringify(NK)); closeKeyPanel(); alert('✅ 네이버 API 키가 저장되었습니다!'); }
+let NK={apiKey:'',secret:'',customerId:''}, curKw='', D=null;
+const groqIn=document.getElementById('groqKey'), groqDot=document.getElementById('groqDot');
+groqIn.addEventListener('input',()=>groqDot.classList.toggle('on',groqIn.value.trim().length>20));
+function gGroq(){const k=groqIn.value.trim();if(!k)throw new Error('Groq API 키를 입력해주세요');return k;}
+function openKeyPanel(){document.getElementById('keyPanel').classList.add('show');}
+function closeKeyPanel(){document.getElementById('keyPanel').classList.remove('show');}
+function saveKeys(){
+  NK.apiKey=document.getElementById('naverApiKey').value.trim();
+  NK.secret=document.getElementById('naverSecret').value.trim();
+  NK.customerId=document.getElementById('naverCustomer').value.trim();
+  const ok=NK.apiKey&&NK.secret&&NK.customerId;
+  document.getElementById('naverDot').classList.toggle('on',ok);
+  if(ok){localStorage.setItem('nk',JSON.stringify(NK));closeKeyPanel();alert('✅ 저장되었습니다!');}
   else alert('3가지 모두 입력해주세요.');
 }
-// 저장된 키 불러오기
-(function(){ try{ const s=localStorage.getItem('nk'); if(s){ NK=JSON.parse(s); if(NK.apiKey){ document.getElementById('naverApiKey').value=NK.apiKey; document.getElementById('naverSecret').value=NK.secret; document.getElementById('naverCustomer').value=NK.customerId; document.getElementById('naverDot').classList.add('on'); } } }catch(e){} })();
-
-function sk(w) { document.getElementById('kwInput').value=w; }
+(function(){try{const s=localStorage.getItem('nk');if(s){NK=JSON.parse(s);if(NK.apiKey){document.getElementById('naverApiKey').value=NK.apiKey;document.getElementById('naverSecret').value=NK.secret;document.getElementById('naverCustomer').value=NK.customerId;document.getElementById('naverDot').classList.add('on');}}}catch(e){}})();
+function sk(w){document.getElementById('kwInput').value=w;}
 
 // ── 로딩/에러 ──
-function showLoad(m) { document.getElementById('loading').classList.add('show'); document.getElementById('result').classList.remove('show'); document.getElementById('err').classList.remove('show'); document.getElementById('searchBtn').disabled=true; document.getElementById('loadTxt').textContent=m||'분석 중...'; ['s1','s2','s3','s4','s5'].forEach(id=>document.getElementById(id).className='lstep'); }
-function hideLoad() { document.getElementById('loading').classList.remove('show'); document.getElementById('searchBtn').disabled=false; }
-function setStep(n) { for(let i=1;i<n;i++) document.getElementById('s'+i).className='lstep done'; if(n<=5) document.getElementById('s'+n).className='lstep active'; }
-function showErr(m) { const b=document.getElementById('err'); b.textContent='오류: '+m; b.classList.add('show'); }
-function setSt(m) { document.getElementById('loadTxt').textContent=m; }
+function showLoad(m){document.getElementById('loading').classList.add('show');document.getElementById('result').classList.remove('show');document.getElementById('err').classList.remove('show');document.getElementById('searchBtn').disabled=true;document.getElementById('loadTxt').textContent=m||'분석 중...';['s1','s2','s3','s4','s5'].forEach(id=>document.getElementById(id).className='lstep');}
+function hideLoad(){document.getElementById('loading').classList.remove('show');document.getElementById('searchBtn').disabled=false;}
+function setStep(n){for(let i=1;i<n;i++)document.getElementById('s'+i).className='lstep done';if(n<=5)document.getElementById('s'+n).className='lstep active';}
+function showErr(m){const b=document.getElementById('err');b.textContent='오류: '+m;b.classList.add('show');}
+function setSt(m){document.getElementById('loadTxt').textContent=m;}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-// ── Groq 호출 ──
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-async function callGroqWithRetry(prompt, sys, maxTok=3000, retries=3) {
-  for(let i=0; i<retries; i++) {
-    try {
-      return await callGroq(prompt, sys, maxTok);
-    } catch(e) {
-      if(e.message.includes('Rate limit') && i < retries-1) {
-        const wait = (i+1) * 8000;
-        setSt(`Rate limit 대기 중... ${Math.round(wait/1000)}초 후 재시도 (${i+1}/${retries})`);
-        await sleep(wait);
+// ── Groq ──
+async function callGroqWithRetry(prompt,sys,maxTok=2000,retries=3){
+  for(let i=0;i<retries;i++){
+    try{return await callGroq(prompt,sys,maxTok);}
+    catch(e){
+      if(e.message.includes('Rate limit')&&i<retries-1){
+        const w=(i+1)*9000;setSt(`Rate limit 대기 ${Math.round(w/1000)}초...`);await sleep(w);
       } else throw e;
     }
   }
 }
-
-async function callGroq(prompt, sys, maxTok=3000) {
-  const key = gGroq();
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-    body: JSON.stringify({model:'llama-3.1-8b-instant', messages:[{role:'system',content:sys},{role:'user',content:prompt}], max_tokens:maxTok, temperature:0.15})
+async function callGroq(prompt,sys,maxTok=2000){
+  const key=gGroq();
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'system',content:sys},{role:'user',content:prompt}],max_tokens:maxTok,temperature:0.15})
   });
-  if(!res.ok) { const e=await res.json().catch(()=>{}); throw new Error(e?.error?.message||'Groq API 오류'); }
-  const d = await res.json();
-  return d.choices?.[0]?.message?.content||'';
+  if(!res.ok){const e=await res.json().catch(()=>{});throw new Error(e?.error?.message||'Groq API 오류');}
+  const d=await res.json();return d.choices?.[0]?.message?.content||'';
 }
-function sj(raw) { const c=raw.replace(/```json|```/gi,'').trim(); const si=c.indexOf('{'),ei=c.lastIndexOf('}'); if(si===-1||ei===-1) throw new Error('JSON 파싱 실패'); return JSON.parse(c.slice(si,ei+1)); }
+function sj(raw){const c=raw.replace(/```json|```/gi,'').trim();const si=c.indexOf('{'),ei=c.lastIndexOf('}');if(si===-1||ei===-1)throw new Error('JSON 파싱 실패');return JSON.parse(c.slice(si,ei+1));}
 
-// ── 네이버 API 호출 (Netlify Function 경유) ──
-async function callNaver(keyword) {
-  if(!NK.apiKey || !NK.secret || !NK.customerId) return null;
-  try {
-    const res = await fetch('/.netlify/functions/naver-keyword', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ keyword, apiKey:NK.apiKey, secretKey:NK.secret, customerId:NK.customerId })
-    });
-    if(!res.ok) return null;
-    return await res.json();
-  } catch(e) { console.warn('네이버 API 오류:', e); return null; }
+// ── 네이버 API ──
+async function callNaver(keyword){
+  if(!NK.apiKey||!NK.secret||!NK.customerId)return null;
+  try{
+    const res=await fetch('/.netlify/functions/naver-keyword',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keyword,apiKey:NK.apiKey,secretKey:NK.secret,customerId:NK.customerId})});
+    if(!res.ok)return null;return await res.json();
+  }catch(e){console.warn('네이버 API 오류:',e);return null;}
+}
+
+// ── 비교 모드 ──
+function toggleCompare(){
+  document.getElementById('cmpInputs').classList.toggle('show', document.getElementById('cmpToggle').checked);
+}
+async function runCompare(){
+  const kws=[document.getElementById('cmpKw1').value.trim(),document.getElementById('cmpKw2').value.trim(),document.getElementById('cmpKw3').value.trim()].filter(Boolean);
+  if(kws.length<2){alert('키워드를 최소 2개 입력해주세요.');return;}
+  showLoad('키워드 비교 중...');
+  try{
+    const results=await Promise.all(kws.map(k=>callNaver(k)));
+    const maxVol=Math.max(...results.map((r,i)=>r?parseInt((r.monthlyTotal||'0').replace(/,/g,'')):0));
+    document.getElementById('compareCard').style.display='block';
+    document.getElementById('compareBody').innerHTML=`
+      <table class="compare-table">
+        <thead><tr><th>키워드</th><th>월 검색량</th><th>PC</th><th>모바일</th><th>경쟁도</th><th>연관 키워드</th><th>추천도</th></tr></thead>
+        <tbody>${kws.map((kw,i)=>{
+          const r=results[i];
+          const vol=r?parseInt((r.monthlyTotal||'0').replace(/,/g,'')):0;
+          const pct=maxVol>0?Math.round(vol/maxVol*100):0;
+          const isWinner=vol===maxVol&&maxVol>0;
+          const comp=r?r.competition:'—';
+          const score=comp==='낮음'?'⭐⭐⭐':comp==='보통'?'⭐⭐':'⭐';
+          return `<tr class="${isWinner?'cmp-winner':''}">
+            <td class="cmp-kw">${kw}${isWinner?' 🏆':''}</td>
+            <td><strong>${r?r.monthlyTotal:'—'}</strong></td>
+            <td>${r?r.monthlyPc:'—'}</td>
+            <td>${r?r.monthlyMobile:'—'}</td>
+            <td><span class="tag ${comp==='낮음'?'tag-g':comp==='높음'?'tag-r':'tag-o'}">${comp}</span></td>
+            <td>${r?r.relatedKeywords.length+'개':'—'}</td>
+            <td class="cmp-bar-cell"><div class="cmp-mini-bar" style="width:${pct}%"></div><span style="font-size:10px;color:var(--dim)">${score}</span></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    hideLoad();
+    document.getElementById('result').classList.add('show');
+    document.getElementById('compareCard').scrollIntoView({behavior:'smooth'});
+  }catch(e){hideLoad();showErr(e.message);}
 }
 
 // ── 메인 분석 ──
-async function go() {
-  const kw = document.getElementById('kwInput').value.trim();
-  if(!kw) return;
-  curKw = kw;
-  showLoad('네이버 검색량 조회 중...');
-
-  try {
-    // STEP 1~2: 네이버 실제 데이터
+async function go(){
+  const kw=document.getElementById('kwInput').value.trim();if(!kw)return;
+  curKw=kw;showLoad('네이버 검색량 조회 중...');
+  try{
     setStep(1);
-    const naverData = await callNaver(kw);
+    const naverData=await callNaver(kw);
     setStep(2);
-
-    // STEP 3: AI 전략 분석
-    setSt('AI 전략 분석 중...');
-    setStep(3);
-
-    const hasReal = !!naverData && !naverData.error;
-    const realInfo = hasReal ? `실제 네이버 데이터:
-- 월 PC 검색량: ${naverData.monthlyPc}
-- 월 모바일 검색량: ${naverData.monthlyMobile}
-- 경쟁도: ${naverData.competition}
-- 연관 키워드 수: ${naverData.relatedKeywords?.length || 0}개` : '(네이버 API 연동 없음 - AI 추정)';
-
-    const sys1 = `Korean Naver blog SEO expert. Reply ONLY pure JSON, no markdown.`;
-    const p1 = `네이버 블로그 키워드 "${kw}" 분석.
-${realInfo}
-
-JSON:
-{"summary":"한줄설명30자이내","difficulty":"쉬움|보통|어려움|매우어려움","diffColor":"green|orange|red","saturation":"${hasReal?Math.round((parseInt(naverData.monthlyMobile?.replace(/,/g,''))||0)/1000*10)+'%':'AI추정'}","topAge":"평균 XX일 (숫자+일 형식으로만, 예: 평균 34일)","goldKeywords":[{"word":"황금키워드1","vol":"3,200","comp":"낮음","score":91,"isGold":true},{"word":"황금키워드2","vol":"2,100","comp":"낮음","score":87,"isGold":true},{"word":"황금키워드3","vol":"4,500","comp":"보통","score":74,"isGold":false},{"word":"황금키워드4","vol":"1,800","comp":"낮음","score":83,"isGold":true},{"word":"황금키워드5","vol":"900","comp":"낮음","score":78,"isGold":false},{"word":"황금키워드6","vol":"5,200","comp":"높음","score":61,"isGold":false},{"word":"황금키워드7","vol":"1,100","comp":"낮음","score":75,"isGold":false}],"exposure":{"optWords":"2,200~2,800자","images":"5~8장","tags":"20개","period":"14~30일","updateFreq":"주 3회 이상"},"checklist":[{"icon":"✍️","text":"제목에 키워드 포함 (앞쪽 배치)","score":"필수","level":"must"},{"icon":"📝","text":"본문 2,500자 이상 작성","score":"필수","level":"must"},{"icon":"🖼️","text":"직접 촬영 이미지 5장 이상","score":"중요","level":"high"},{"icon":"🏷️","text":"태그 15~20개 설정","score":"중요","level":"high"},{"icon":"🔗","text":"내부 링크 3개 이상 삽입","score":"권장","level":"mid"},{"icon":"📅","text":"꾸준한 포스팅 (주 3회+)","score":"권장","level":"mid"}],"trendDesc":"트렌드 설명 1문장","timingScores":{"일":40,"월":65,"화":95,"수":70,"목":90,"금":60,"토":45},"timingDesc":"화요일 오전 10시, 목요일 오후 2시가 조회수 최고점","series":[{"title":"시리즈제목1","desc":"1편 부제"},{"title":"시리즈제목2","desc":"2편"},{"title":"시리즈제목3","desc":"3편"},{"title":"시리즈제목4","desc":"4편"},{"title":"시리즈제목5","desc":"5편"}]}`;
-
-    const raw1 = await callGroqWithRetry(p1, sys1, 3000);
-    const d1 = sj(raw1);
-
-    // STEP 4: 제목 + 블로그 초안
-    setSt('콘텐츠 제목 생성 중...');
-    setStep(4);
+    setSt('AI 전략 분석 중...');setStep(3);
+    const hasReal=!!naverData&&!naverData.error;
+    const realInfo=hasReal?`실제 데이터: PC ${naverData.monthlyPc}, 모바일 ${naverData.monthlyMobile}, 경쟁도 ${naverData.competition}, 연관키워드 ${naverData.relatedKeywords?.length||0}개`:'(AI 추정)';
+    const sys1=`Korean Naver blog SEO expert. Reply ONLY pure JSON, no markdown.`;
+    const raw1=await callGroqWithRetry(`키워드 "${kw}". ${realInfo}. JSON:{"summary":"한줄30자","difficulty":"쉬움|보통|어려움|매우어려움","diffColor":"green|orange|red","saturation":"${hasReal?Math.round((parseInt(naverData?.monthlyMobile?.replace(/,/g,'')||0)/1000*10))+'%':'AI추정'}","topAge":"평균 XX일","goldKeywords":[{"word":"황금키워드1","vol":"3,200","comp":"낮음","score":91,"isGold":true},{"word":"황금키워드2","vol":"2,100","comp":"낮음","score":87,"isGold":true},{"word":"황금키워드3","vol":"4,500","comp":"보통","score":74,"isGold":false},{"word":"황금키워드4","vol":"1,800","comp":"낮음","score":83,"isGold":true},{"word":"황금키워드5","vol":"900","comp":"낮음","score":78,"isGold":false},{"word":"황금키워드6","vol":"5,200","comp":"높음","score":61,"isGold":false},{"word":"황금키워드7","vol":"1,100","comp":"낮음","score":75,"isGold":false}],"exposure":{"optWords":"2,200~2,800자","images":"5~8장","tags":"20개","period":"14~30일","updateFreq":"주 3회 이상"},"checklist":[{"icon":"✍️","text":"제목에 키워드 포함 (앞쪽 배치)","score":"필수","level":"must"},{"icon":"📝","text":"본문 2,500자 이상 작성","score":"필수","level":"must"},{"icon":"🖼️","text":"직접 촬영 이미지 5장 이상","score":"중요","level":"high"},{"icon":"🏷️","text":"태그 15~20개 설정","score":"중요","level":"high"},{"icon":"🔗","text":"내부 링크 3개 이상 삽입","score":"권장","level":"mid"},{"icon":"📅","text":"꾸준한 포스팅 (주 3회+)","score":"권장","level":"mid"}],"trendDesc":"트렌드 1문장","timingScores":{"일":40,"월":65,"화":95,"수":70,"목":90,"금":60,"토":45},"timingDesc":"최적 발행 시간 1문장"}`,sys1,2500);
+    const d1=sj(raw1);
+    setStep(4);setSt('콘텐츠 생성 중...');
     await sleep(5000);
-    const sys2 = `Korean SEO expert. Reply ONLY pure JSON.`;
-    const raw2 = await callGroqWithRetry(`키워드"${kw}" 네이버 블로그 SEO 제목 10개. JSON: {"titles":["제목1","제목2","제목3","제목4","제목5","제목6","제목7","제목8","제목9","제목10"]}`, sys2, 1000);
-    const d2 = sj(raw2);
-
-    setSt('블로그 초안 생성 중...');
+    const [raw2,blogDraft]=await Promise.all([
+      callGroqWithRetry(`키워드"${kw}" 네이버 블로그 SEO 제목 10개. JSON:{"titles":["제목1","제목2","제목3","제목4","제목5","제목6","제목7","제목8","제목9","제목10"]}`,`Korean SEO expert. Reply ONLY pure JSON.`,800),
+      callGroqWithRetry(`키워드 "${kw}" 블로그 포스팅. 2000~2500자. 도입(후킹)→소제목4개→마무리. 텍스트만.`,`당신은 네이버 블로그 SEO 전문 작가입니다.`,2500)
+    ]);
+    const d2=sj(raw2);
+    setStep(5);setSt('타겟·SNS 분석 중...');
     await sleep(5000);
-    const blogDraft = await callGroqWithRetry(
-      `키워드 "${kw}" 네이버 블로그 포스팅 초안. 2000~2500자. 도입부(후킹)→소제목4개→마무리(CTA). 친근하고 유익한 톤. 서식 없이 텍스트만.`,
-      `당신은 네이버 블로그 SEO 전문 작가입니다.`, 2500
-    );
-
-    // STEP 5: 키워드 성격 + 타겟 독자 + SNS
-    setSt('타겟 독자 및 SNS 콘텐츠 분석 중...');
-    setStep(5);
-    await sleep(5000);
-    const sys5 = `Korean blog SNS marketing expert. Reply ONLY pure JSON, no markdown.`;
-    const raw5 = await callGroqWithRetry(
-      `키워드 "${kw}" 분석. JSON:{"intentAnalysis":{"issue":35,"info":80,"commercial":45,"issueDesc":"이슈성 한줄","infoDesc":"정보성 한줄","commDesc":"상업성 한줄","summary":"키워드 성격 요약 1문장"},"demographic":{"maleRatio":45,"ageGroups":[{"age":"10대","pct":5},{"age":"20대","pct":25},{"age":"30대","pct":35},{"age":"40대","pct":25},{"age":"50대+","pct":10}],"summary":"주요 독자층 특성 1문장"},"snsInsta":"인스타 캡션 (이모지 포함, 해시태그 10개, 150자 내외)"}`,
-      sys5, 1500
-    );
-    const d5 = sj(raw5);
-
-    if(hasReal) { d1.naverReal = naverData; }
-    D = { ...d1, titles:d2.titles, blogDraft, intentAnalysis:d5.intentAnalysis, demographic:d5.demographic, snsInsta:d5.snsInsta, kw, hasReal };
-    hideLoad();
-    render(D);
-  } catch(e) { hideLoad(); showErr(e.message); }
+    const raw5=await callGroqWithRetry(`키워드 "${kw}". JSON:{"intentAnalysis":{"issue":35,"info":80,"commercial":45,"issueDesc":"이슈성 설명","infoDesc":"정보성 설명","commDesc":"상업성 설명","summary":"키워드 성격 요약"},"demographic":{"maleRatio":45,"ageGroups":[{"age":"10대","pct":5},{"age":"20대","pct":25},{"age":"30대","pct":35},{"age":"40대","pct":25},{"age":"50대+","pct":10}],"summary":"주요 독자층 특성"},"snsInsta":"인스타 캡션 이모지풍부 해시태그10개 150자내외"}`,`Korean SNS marketing expert. Reply ONLY pure JSON, no markdown.`,1200);
+    const d5=sj(raw5);
+    if(hasReal)d1.naverReal=naverData;
+    D={...d1,titles:d2.titles,blogDraft,intentAnalysis:d5.intentAnalysis,demographic:d5.demographic,snsInsta:d5.snsInsta,kw,hasReal};
+    hideLoad();render(D);
+  }catch(e){hideLoad();showErr(e.message);}
 }
 
 // ── 렌더링 ──
-function render(d) {
-  const kw = d.kw;
-  document.getElementById('rKw').textContent = kw;
-  document.getElementById('rSummary').textContent = d.summary||'';
+function render(d){
+  const kw=d.kw;
+  document.getElementById('rKw').textContent=kw;
+  document.getElementById('rSummary').textContent=d.summary||'';
+  const dc={green:'background:var(--greenBg);color:var(--green2);border:1px solid var(--greenBorder)',orange:'background:var(--orangeBg);color:var(--orange);border:1px solid #ffd4a8',red:'background:var(--redBg);color:var(--red);border:1px solid #ffc5c5'};
+  document.getElementById('rDiff').style.cssText=dc[d.diffColor]||dc.orange;
+  document.getElementById('rDiff').textContent='난이도: '+(d.difficulty||'보통');
 
-  const dc = {green:'background:var(--greenBg);color:var(--green2);border:1px solid var(--greenBorder)', orange:'background:var(--orangeBg);color:var(--orange);border:1px solid #ffd4a8', red:'background:var(--redBg);color:var(--red);border:1px solid #ffc5c5'};
-  document.getElementById('rDiff').style.cssText = dc[d.diffColor]||dc.orange;
-  document.getElementById('rDiff').textContent = '난이도: '+(d.difficulty||'보통');
+  const nr=d.naverReal;
+  const pcSearch=nr?nr.monthlyPc:(d.monthlySearch||'—');
+  const mobileSearch=nr?nr.monthlyMobile:'—';
+  const totalSearch=nr?nr.monthlyTotal:(d.monthlySearch||'—');
+  const compTxt=nr?nr.competition:(d.competition||'보통');
+  const compScore=compTxt==='낮음'?25:compTxt==='높음'?85:55;
+  const compColor=compScore>70?'red':compScore>40?'orange':'green';
+  document.getElementById('metricsGrid').innerHTML=`
+    <div class="mc green"><div class="mc-label">월 PC검색 <span class="real-tag">${nr?'실제':'AI'}</span></div><div class="mc-val green">${pcSearch}</div><div class="mc-sub">PC 기준</div>${nr?`<div class="device-split"><div class="device-item"><div class="device-lbl">모바일</div><div class="device-val" style="color:var(--blue);font-size:13px;">${mobileSearch}</div></div><div class="device-item"><div class="device-lbl">합계</div><div class="device-val" style="font-size:13px;">${totalSearch}</div></div></div>`:''}</div>
+    <div class="mc ${compColor}"><div class="mc-label">경쟁도 <span class="real-tag">${nr?'실제':'AI'}</span></div><div class="mc-val ${compColor}">${compTxt}</div><div class="gauge"><div class="gauge-fill" style="width:${compScore}%;background:var(--${compColor})"></div></div><div class="mc-sub" style="margin-top:4px;">포화도 ${d.saturation}</div></div>
+    <div class="mc blue"><div class="mc-label">CPC <span class="ai-tag">AI</span></div><div class="mc-val blue">${d.avgCpc||'420원'}</div><div class="mc-sub">광고 클릭 비용</div></div>
+    <div class="mc gold"><div class="mc-label">상위글 평균 유지기간 <span class="ai-tag">AI</span></div><div class="mc-val gold">${d.topAge||'—'}</div><div class="mc-sub">노출 유지 기간</div></div>
+    <div class="mc orange"><div class="mc-label">연관 키워드 <span class="real-tag">${nr?'실제':'AI'}</span></div><div class="mc-val orange">${nr?nr.relatedKeywords.length+'개':(d.relatedKws?.length||'—')+'개'}</div><div class="mc-sub">수집된 연관 키워드</div></div>`;
 
-  // 지표 (네이버 실제 데이터 우선)
-  const nr = d.naverReal;
-  const pcSearch = nr ? nr.monthlyPc : (d.monthlySearch||'—');
-  const mobileSearch = nr ? nr.monthlyMobile : '—';
-  const totalSearch = nr ? nr.monthlyTotal : (d.monthlySearch||'—');
-  const compTxt = nr ? nr.competition : (d.competition||'보통');
-  const compScore = compTxt==='낮음'?25:compTxt==='높음'?85:55;
-  const compColor = compScore>70?'red':compScore>40?'orange':'green';
-
-  document.getElementById('metricsGrid').innerHTML = `
-    <div class="mc green">
-      <div class="mc-label">월 PC검색 <span class="real-tag">${nr?'실제':'AI추정'}</span></div>
-      <div class="mc-val green">${pcSearch}</div>
-      <div class="mc-sub">PC 기준</div>
-      ${nr?`<div class="device-split"><div class="device-item"><div class="device-lbl">모바일</div><div class="device-val" style="color:var(--blue);font-size:13px;">${mobileSearch}</div></div><div class="device-item"><div class="device-lbl">합계</div><div class="device-val" style="font-size:13px;">${totalSearch}</div></div></div>`:''}
-    </div>
-    <div class="mc ${compColor}">
-      <div class="mc-label">경쟁도 <span class="real-tag">${nr?'실제':'AI추정'}</span></div>
-      <div class="mc-val ${compColor}">${compTxt}</div>
-      <div class="gauge"><div class="gauge-fill" style="width:${compScore}%;background:var(--${compColor})"></div></div>
-      <div class="mc-sub" style="margin-top:4px;">포화도 ${d.saturation}</div>
-    </div>
-    <div class="mc blue">
-      <div class="mc-label">CPC <span class="ai-tag">AI추정</span></div>
-      <div class="mc-val blue">${d.revenue?.adsense?.cpc||d.avgCpc||'—'}</div>
-      <div class="mc-sub">광고 클릭 비용</div>
-    </div>
-    <div class="mc gold">
-      <div class="mc-label">상위글 평균 유지기간 <span class="ai-tag">AI추정</span></div>
-      <div class="mc-val gold">${d.topAge||'—'}</div>
-      <div class="mc-sub">노출 유지 기간</div>
-    </div>
-    <div class="mc orange">
-      <div class="mc-label">연관 키워드 <span class="real-tag">${nr?'실제':'AI추정'}</span></div>
-      <div class="mc-val orange">${nr?nr.relatedKeywords.length+'개':(d.relatedKws?.length||'—')+'개'}</div>
-      <div class="mc-sub">수집된 연관 키워드</div>
-    </div>`;
-
-  // 황금 키워드
-  const gkws = d.goldKeywords||[];
-  document.getElementById('goldList').innerHTML = gkws.map((k,i)=>`
+  const gkws=d.goldKeywords||[];
+  document.getElementById('goldList').innerHTML=gkws.map((k,i)=>`
     <div class="gkw-row" onclick="openKwDetail('${k.word.replace(/'/g,"\\'")}','${k.vol}','${k.comp}')">
       <span class="gkw-rank ${i<3?'top':''}">${i<3?'★':(i+1)}</span>
       <span class="gkw-word">${k.word}</span>
@@ -799,120 +737,61 @@ function render(d) {
       ${k.isGold?'<span class="tag tag-gold">황금</span>':''}
       <span class="gkw-score">${k.score}</span>
     </div>`).join('');
-  document.getElementById('top20BtnWrap').innerHTML = '<button class="top20-btn" onclick="openTop20()">🏆 현재 키워드 상위노출 블로그 TOP 20 보기</button>';
+  document.getElementById('top20BtnWrap').innerHTML='<button class="top20-btn" onclick="openTop20()">🏆 현재 키워드 상위노출 블로그 TOP 20 보기</button>';
 
-  // 연관 키워드 (실제 데이터 우선)
-  const rels = nr ? nr.relatedKeywords : (d.relatedKws||[]).map(k=>({word:k.word,vol:k.vol,comp:k.comp||'—'}));
-  document.getElementById('relCnt').textContent = rels.length+'개';
-  document.getElementById('relList').innerHTML = rels.slice(0,20).map(k=>{
-    const w=(k.word||'').replace(/'/g,"\\'");
-    const v=String(k.vol||'—');
-    const c=String(k.comp||'—');
-    return '<div class="rkw" onclick="openKwDetail(\'' + w + '\',\'' + v + '\',\'' + c + '\')">' + k.word + '<span class="rkw-vol">' + k.vol + '</span></div>';
+  const rels=nr?nr.relatedKeywords:(d.relatedKws||[]).map(k=>({word:k.word,vol:k.vol,comp:k.comp||'—'}));
+  document.getElementById('relCnt').textContent=rels.length+'개';
+  document.getElementById('relList').innerHTML=rels.slice(0,20).map(k=>{
+    const w=(k.word||'').replace(/'/g,"\\'"),v=String(k.vol||'—'),c=String(k.comp||'—');
+    return '<div class="rkw" onclick="openKwDetail(\''+w+'\',\''+v+'\',\''+c+'\')">'+k.word+'<span class="rkw-vol">'+k.vol+'</span></div>';
   }).join('');
 
-  // 상위노출 분석
-  const ex = d.exposure||{};
-  document.getElementById('expGrid').innerHTML = [
-    ['최적 글자수',ex.optWords,'권장 범위'],
-    ['이미지 수',ex.images,'직접 촬영 권장'],
-    ['태그 수',ex.tags,'상위 노출 필수'],
-    ['상위 유지',ex.period,'꾸준한 유입'],
-    ['발행 주기',ex.updateFreq,'알고리즘'],
-  ].map(([l,v,s])=>`<div class="exp-item"><div class="exp-label">${l}</div><div class="exp-val">${v||'—'}</div><div class="exp-sub">${s}</div></div>`).join('');
+  const ex=d.exposure||{};
+  document.getElementById('expGrid').innerHTML=[['최적 글자수',ex.optWords,'권장 범위'],['이미지 수',ex.images,'직접 촬영 권장'],['태그 수',ex.tags,'상위 노출 필수'],['상위 유지',ex.period,'꾸준한 유입'],['발행 주기',ex.updateFreq,'알고리즘']].map(([l,v,s])=>`<div class="exp-item"><div class="exp-label">${l}</div><div class="exp-val">${v||'—'}</div><div class="exp-sub">${s}</div></div>`).join('');
 
-  // 체크리스트
   const clrMap={must:'background:var(--greenBg);color:var(--green2)',high:'background:var(--blueBg);color:var(--blue)',mid:'background:var(--border);color:var(--muted)'};
-  document.getElementById('checkList').innerHTML = (d.checklist||[]).map(c=>`
-    <div class="chk-item">
-      <span class="chk-icon">${c.icon}</span>
-      <span class="chk-txt">${c.text}</span>
-      <span class="chk-score" style="${clrMap[c.level]||clrMap.mid}">${c.score}</span>
-    </div>`).join('');
+  document.getElementById('checkList').innerHTML=(d.checklist||[]).map(c=>`<div class="chk-item"><span class="chk-icon">${c.icon}</span><span class="chk-txt">${c.text}</span><span class="chk-score" style="${clrMap[c.level]||clrMap.mid}">${c.score}</span></div>`).join('');
 
-  // 발행 타이밍
-  const ts = d.timingScores||{일:40,월:65,화:95,수:70,목:90,금:60,토:45};
-  const days = ['일','월','화','수','목','금','토'];
-  const maxS = Math.max(...Object.values(ts));
-  document.getElementById('timingGrid').innerHTML = days.map(day=>{
-    const s=ts[day]||40, pct=Math.round((s/maxS)*100);
-    const color=s>=85?'var(--green)':s>=65?'var(--blue)':'var(--border2)';
-    return `<div class="timing-day"><div class="timing-label">${day}</div><div class="timing-bar-wrap"><div class="timing-bar" style="height:${pct}%;background:${color}"></div></div><div class="timing-val">${s}</div></div>`;
-  }).join('');
-  document.getElementById('timingDesc').textContent = d.timingDesc||d.timing?.desc||'';
+  const ts=d.timingScores||{일:40,월:65,화:95,수:70,목:90,금:60,토:45};
+  const days=['일','월','화','수','목','금','토'],maxS=Math.max(...Object.values(ts));
+  document.getElementById('timingGrid').innerHTML=days.map(day=>{const s=ts[day]||40,pct=Math.round((s/maxS)*100),color=s>=85?'var(--green)':s>=65?'var(--blue)':'var(--border2)';return`<div class="timing-day"><div class="timing-label">${day}</div><div class="timing-bar-wrap"><div class="timing-bar" style="height:${pct}%;background:${color}"></div></div><div class="timing-val">${s}</div></div>`;}).join('');
+  document.getElementById('timingDesc').textContent=d.timingDesc||'';
 
-  // 트렌드 (실제 데이터 우선)
-  const trendArr = (nr?.trendData?.length) ? nr.trendData : (d.trendData||[40,50,45,60,70,65,80,75,85,90,88,95]);
+  const trendArr=(nr?.trendData?.length)?nr.trendData:[40,50,45,60,70,65,80,75,85,90,88,95];
   const tMax=Math.max(...trendArr),tMin=Math.min(...trendArr);
-  const pts = trendArr.map((v,i)=>{ const x=(i/(trendArr.length-1))*280+10, y=64-((v-tMin)/(tMax-tMin+1))*56; return `${x},${y}`; }).join(' ');
-  document.getElementById('trendDesc').textContent = d.trendDesc||'';
-  document.getElementById('trendChart').innerHTML = `
-    <svg viewBox="0 0 300 68" width="100%" height="70">
-      <defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#03c75a" stop-opacity=".2"/><stop offset="100%" stop-color="#03c75a" stop-opacity="0"/></linearGradient></defs>
-      <polygon fill="url(#tg)" points="10,68 ${pts} ${(trendArr.length-1)/(trendArr.length-1)*280+10},68"/>
-      <polyline fill="none" stroke="#03c75a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/>
-    </svg>`;
+  const pts=trendArr.map((v,i)=>{const x=(i/(trendArr.length-1))*280+10,y=62-((v-tMin)/(tMax-tMin+1))*54;return`${x},${y}`;}).join(' ');
+  document.getElementById('trendDesc').textContent=d.trendDesc||'';
+  document.getElementById('trendChart').innerHTML=`<svg viewBox="0 0 300 66" width="100%" height="65"><defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#03c75a" stop-opacity=".2"/><stop offset="100%" stop-color="#03c75a" stop-opacity="0"/></linearGradient></defs><polygon fill="url(#tg)" points="10,66 ${pts} ${(trendArr.length-1)/(trendArr.length-1)*280+10},66"/><polyline fill="none" stroke="#03c75a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/></svg>`;
 
-  // 시리즈
+  // 키워드 성격
+  const intentData=d.intentAnalysis||{};
+  const intents=[{label:'이슈성',score:intentData.issue||0,color:'var(--red)',desc:intentData.issueDesc||''},{label:'정보성',score:intentData.info||0,color:'var(--blue)',desc:intentData.infoDesc||''},{label:'상업성',score:intentData.commercial||0,color:'var(--orange)',desc:intentData.commDesc||''}];
+  document.getElementById('intentGrid').innerHTML=intents.map(it=>`<div class="intent-item"><div class="intent-label">${it.label}</div><div class="intent-score" style="color:${it.color}">${it.score}점</div><div class="intent-bar"><div class="intent-bar-fill" style="width:${it.score}%;background:${it.color}"></div></div><div class="intent-desc">${it.desc}</div></div>`).join('');
+  document.getElementById('intentDesc').textContent=intentData.summary||'';
 
-  // 제목
-  document.getElementById('titleList').innerHTML = (d.titles||[]).map((t,i)=>`
-    <div class="title-item" onclick="cpTitle(this)">
-      <span class="ti-num">${i+1}</span><span class="ti-text">${t}</span><span class="ti-copy">클릭 복사</span>
-    </div>`).join('');
+  // 타겟 독자
+  const demo=d.demographic||{};
+  const genderM=demo.maleRatio||50,genderF=100-genderM;
+  const ages=demo.ageGroups||[{age:'10대',pct:5},{age:'20대',pct:20},{age:'30대',pct:35},{age:'40대',pct:25},{age:'50대+',pct:15}];
+  const maxAge=Math.max(...ages.map(a=>a.pct));
+  document.getElementById('demoGrid').innerHTML=`
+    <div class="demo-item"><div class="demo-lbl">성별 비율</div><div class="gender-bars">
+      <div class="g-bar-wrap"><div class="g-bar" style="height:${genderM*0.42}px;background:var(--blue)"></div><div class="g-lbl">남</div><div class="g-val">${genderM}%</div></div>
+      <div class="g-bar-wrap"><div class="g-bar" style="height:${genderF*0.42}px;background:#f472b6"></div><div class="g-lbl">여</div><div class="g-val">${genderF}%</div></div>
+    </div></div>
+    <div class="demo-item"><div class="demo-lbl">연령별 비율</div><div class="age-bars">
+      ${ages.map(a=>`<div class="age-bar-wrap"><div class="age-bar" style="height:${Math.round((a.pct/maxAge)*42)}px;background:var(--green)"></div><div class="age-lbl">${a.age}</div><div class="age-val">${a.pct}%</div></div>`).join('')}
+    </div></div>`;
+  document.getElementById('demoDesc').textContent=demo.summary||'';
 
-  // 글쓰기
-  document.getElementById('wo-full').textContent = d.blogDraft||'생성 실패';
-  document.getElementById('wo-hook').textContent = '재생성 버튼을 눌러주세요';
-  document.getElementById('wo-outline').textContent = '재생성 버튼을 눌러주세요';
-
-
-
-  // ── 키워드 성격 분석
-  const intentData = d.intentAnalysis || {};
-  const intents = [
-    {label:'이슈성', score: intentData.issue||0, color:'var(--red)', desc:intentData.issueDesc||''},
-    {label:'정보성', score: intentData.info||0, color:'var(--blue)', desc:intentData.infoDesc||''},
-    {label:'상업성', score: intentData.commercial||0, color:'var(--orange)', desc:intentData.commDesc||''},
-  ];
-  document.getElementById('intentGrid').innerHTML = intents.map(it=>`
-    <div class="intent-item">
-      <div class="intent-label">${it.label}</div>
-      <div class="intent-score" style="color:${it.color}">${it.score}점</div>
-      <div class="intent-bar"><div class="intent-bar-fill" style="width:${it.score}%;background:${it.color}"></div></div>
-      <div class="intent-desc">${it.desc}</div>
-    </div>`).join('');
-  document.getElementById('intentDesc').textContent = intentData.summary||'';
-
-  // ── 타겟 독자 분석
-  const demo = d.demographic || {};
-  const genderM = demo.maleRatio||50, genderF = 100-genderM;
-  const ages = demo.ageGroups || [{age:'10대',pct:5},{age:'20대',pct:20},{age:'30대',pct:35},{age:'40대',pct:25},{age:'50대+',pct:15}];
-  const maxAge = Math.max(...ages.map(a=>a.pct));
-  document.getElementById('demoGrid').innerHTML = `
-    <div class="demo-item">
-      <div class="demo-lbl">성별 비율</div>
-      <div class="gender-bars">
-        <div class="g-bar-wrap">
-          <div class="g-bar" style="height:${genderM*0.44}px;background:var(--blue)"></div>
-          <div class="g-lbl">남</div><div class="g-val">${genderM}%</div>
-        </div>
-        <div class="g-bar-wrap">
-          <div class="g-bar" style="height:${genderF*0.44}px;background:#f472b6"></div>
-          <div class="g-lbl">여</div><div class="g-val">${genderF}%</div>
-        </div>
-      </div>
-    </div>
-    <div class="demo-item">
-      <div class="demo-lbl">연령별 비율</div>
-      <div class="age-bars">
-        ${ages.map(a=>`<div class="age-bar-wrap"><div class="age-bar" style="height:${Math.round((a.pct/maxAge)*44)}px;background:var(--green)"></div><div class="age-lbl">${a.age}</div><div class="age-val">${a.pct}%</div></div>`).join('')}
-      </div>
-    </div>`;
-  document.getElementById('demoDesc').textContent = demo.summary||'';
-
-  // ── SNS 인스타 기본 생성
-  document.getElementById('sno-insta').textContent = d.snsInsta||'재생성 버튼을 눌러주세요';
+  // 제목 목록
+  document.getElementById('titleList').innerHTML=(d.titles||[]).map((t,i)=>`<div class="title-item" onclick="cpTitle(this)"><span class="ti-num">${i+1}</span><span class="ti-text">${t}</span><span class="ti-copy">클릭 복사</span></div>`).join('');
+  document.getElementById('wo-full').textContent=d.blogDraft||'생성 실패';
+  document.getElementById('wo-hook').textContent='재생성 버튼을 눌러주세요';
+  document.getElementById('wo-outline').textContent='재생성 버튼을 눌러주세요';
+  document.getElementById('sno-insta').textContent=d.snsInsta||'재생성 버튼을 눌러주세요';
+  document.getElementById('sno-reels').textContent='재생성 버튼을 눌러주세요';
+  document.getElementById('sno-threads').textContent='재생성 버튼을 눌러주세요';
 
   document.getElementById('result').classList.add('show');
   document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
@@ -923,34 +802,51 @@ function swW(type,el){document.querySelectorAll('.wtab').forEach(t=>t.classList.
 function cpTitle(el){const t=el.querySelector('.ti-text').textContent;navigator.clipboard.writeText(t).then(()=>{const c=el.querySelector('.ti-copy');c.textContent='✅ 복사됨';setTimeout(()=>c.textContent='클릭 복사',1500);});}
 function cpWrite(type){navigator.clipboard.writeText(document.getElementById('wo-'+type).textContent).then(()=>alert('복사되었습니다!'));}
 async function regenW(type){
-  if(!curKw)return; const el=document.getElementById('wo-'+type); el.textContent='생성 중...';
-  const pm={hook:`키워드 "${curKw}" 블로그 도입부 후킹 3버전. 각 100~150자. 번호매겨서. 텍스트만.`,outline:`키워드 "${curKw}" 블로그 소제목 구조. 도입→소제목5~6개(가이드2~3줄)→마무리. 텍스트만.`,full:`키워드 "${curKw}" 블로그 포스팅 재작성. 2000~2500자. 도입→소제목4개→마무리. 텍스트만.`};
+  if(!curKw)return;const el=document.getElementById('wo-'+type);el.textContent='생성 중...';
+  const pm={hook:`키워드"${curKw}" 블로그 도입부 후킹 3버전. 각 100~150자. 번호매겨서.`,outline:`키워드"${curKw}" 블로그 소제목 구조. 도입→소제목5~6개→마무리. 텍스트만.`,full:`키워드"${curKw}" 블로그 포스팅. 2000~2500자. 도입→소제목4개→마무리. 텍스트만.`};
   try{const r=await callGroq(pm[type],`당신은 네이버 블로그 SEO 전문 작가입니다.`,2000);el.textContent=r;}catch(e){el.textContent='오류: '+e.message;}
 }
-function closeModal(id){document.getElementById(id).classList.remove('show');}
-function closeModalOverlay(e,id){if(e.target.classList.contains('modal-overlay'))closeModal(id);}
+
+// ── SNS ──
+function swSNS(type,el){document.querySelectorAll('.sns-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.sns-content').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('sns-'+type).classList.add('active');}
+async function regenSNS(type){
+  if(!curKw)return;const el=document.getElementById('sno-'+type);el.textContent='생성 중...';
+  const prompts={
+    insta:`키워드"${curKw}" 인스타그램 캡션. 이모지 풍부하게, 해시태그 10개, 150자 내외. 텍스트만.`,
+    reels:`키워드"${curKw}" 인스타 릴스 스크립트. 훅(3초)→본문(30초)→CTA(5초). 구어체. 텍스트만.`,
+    threads:`키워드"${curKw}" 스레드 연속 포스팅 5개. 각 140자 내외. 흐름있게. 이모지 포함. 텍스트만.`
+  };
+  try{const r=await callGroqWithRetry(prompts[type],'당신은 SNS 마케팅 전문가입니다.',700);el.textContent=r;}catch(e){el.textContent='오류: '+e.message;}
+}
+function cpSNS(type){navigator.clipboard.writeText(document.getElementById('sno-'+type).textContent).then(()=>alert('복사되었습니다!'));}
+
+// ── 제목 SEO 체커 ──
+async function checkTitleSEO(){
+  const title=document.getElementById('titleCheckInput').value.trim();if(!title)return;
+  const result=document.getElementById('titleCheckResult');
+  result.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0;">분석 중...</div>';
+  try{
+    const raw=await callGroqWithRetry(`제목:"${title}" 키워드:"${curKw||'미지정'}". JSON:{"score":78,"grade":"B+","checks":[{"pass":true,"item":"키워드 앞쪽 배치","desc":""},{"pass":false,"item":"적정 길이 25~35자","desc":""},{"pass":true,"item":"숫자·구체성","desc":""},{"pass":false,"item":"클릭 유도 표현","desc":""},{"pass":true,"item":"중복 키워드 없음","desc":""}],"suggestion":"개선 제목 제안","reason":"이유 1문장"}`,`Korean Naver blog SEO expert. Reply ONLY pure JSON.`,600);
+    const d=sj(raw);
+    const sc=d.score>=80?'var(--green)':d.score>=60?'var(--orange)':'var(--red)';
+    const sb=d.score>=80?'var(--greenBg)':d.score>=60?'var(--orangeBg)':'var(--redBg)';
+    result.innerHTML=`<div class="seo-score-wrap"><div class="seo-score-circle" style="background:${sb};color:${sc}"><div class="seo-score-num">${d.score}</div><div class="seo-score-txt">${d.grade||''}</div></div><div class="seo-checks">${(d.checks||[]).map(c=>`<div class="seo-check-item"><span>${c.pass?'✅':'❌'}</span><span style="color:${c.pass?'var(--ink2)':'var(--muted)'}">${c.item}</span></div>`).join('')}</div></div>${d.suggestion?`<div style="padding:9px 11px;background:var(--greenBg);border:1px solid var(--greenBorder);border-radius:7px;font-size:12px;margin-top:7px;">💡 <strong>개선 제안:</strong> ${d.suggestion}</div>`:''}`;
+  }catch(e){result.innerHTML=`<div style="color:var(--red);font-size:12px;padding:8px 0;">오류: ${e.message}</div>`;}
+}
 
 // ── 키워드 상세 모달 ──
 async function openKwDetail(kw,vol,comp){
   document.getElementById('modalKw').textContent=kw;
   document.getElementById('kwModal').classList.add('show');
   document.getElementById('modalBody').innerHTML='<div class="modal-spin-wrap"><div class="modal-spin"></div><span style="font-size:12px;color:var(--muted)">분석 중...</span></div>';
-
-  // 네이버 실제 데이터도 가져오기
-  const nr = await callNaver(kw);
-  const realVol = (nr && nr.monthlyTotal && nr.monthlyTotal !== '0') ? nr.monthlyTotal : (vol||'—');
-  const realComp = (nr && nr.competition && nr.competition !== '—') ? nr.competition : (comp||'—');
-
+  const nr=await callNaver(kw);
+  const realVol=(nr&&nr.monthlyTotal&&nr.monthlyTotal!=='0')?nr.monthlyTotal:(vol||'—');
+  const realComp=(nr&&nr.competition&&nr.competition!=='—')?nr.competition:(comp||'—');
   try{
-    const sys=`Korean Naver blog SEO expert. Reply ONLY pure JSON, no markdown.`;
-    const p=`"${kw}" 상세 분석. 검색량=${realVol}, 경쟁도=${realComp}. JSON:
-{"monthlySearch":"${realVol}","pcSearch":"${nr?.monthlyPc||'—'}","mobileSearch":"${nr?.monthlyMobile||'—'}","competition":"${realComp}","difficulty":"쉬움","opportunity":78,"saturation":"120%","cpc":"350원","topAge":"28일","strategy":"이 키워드 상위노출 전략 3문장.","targetUser":"주요 타겟 유저 특성 2문장.","bestTitles":["제목1","제목2","제목3","제목4","제목5"],"tags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8"],"warning":"주의할 점 2문장."}`;
-    const raw=await callGroqWithRetry(p,sys,1200);
+    const raw=await callGroqWithRetry(`"${kw}" 검색량=${realVol}, 경쟁도=${realComp}. JSON:{"monthlySearch":"${realVol}","pcSearch":"${nr?.monthlyPc||'—'}","mobileSearch":"${nr?.monthlyMobile||'—'}","competition":"${realComp}","difficulty":"쉬움","opportunity":78,"saturation":"120%","cpc":"350원","strategy":"상위노출 전략 3문장.","targetUser":"타겟 유저 2문장.","bestTitles":["제목1","제목2","제목3","제목4","제목5"],"tags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8"],"warning":"주의사항 2문장."}`,`Korean Naver blog SEO expert. Reply ONLY pure JSON.`,1000);
     const d=sj(raw);
-    const ms = d.monthlySearch||realVol||'—';
-    const pcs = d.pcSearch||(nr?.monthlyPc)||'—';
-    const mbs = d.mobileSearch||(nr?.monthlyMobile)||'—';
-    const opp = typeof d.opportunity==='number' ? d.opportunity : 50;
+    const ms=d.monthlySearch||realVol||'—',pcs=d.pcSearch||(nr?.monthlyPc)||'—',mbs=d.mobileSearch||(nr?.monthlyMobile)||'—';
+    const opp=typeof d.opportunity==='number'?d.opportunity:50;
     const oc=opp>=70?'var(--green)':opp>=40?'var(--orange)':'var(--red)';
     document.getElementById('modalBody').innerHTML=`
       <div class="kd-metrics">
@@ -960,104 +856,39 @@ async function openKwDetail(kw,vol,comp){
       </div>
       <div class="kd-section"><div class="kd-sec-title">📌 상위노출 전략</div><div class="kd-text">${(d.strategy||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div></div>
       <div class="kd-section"><div class="kd-sec-title">👥 타겟 유저</div><div class="kd-text">${d.targetUser||'—'}</div></div>
-      <div class="kd-section">
-        <div class="kd-sec-title">✍️ 추천 제목 <span style="font-size:10px;color:var(--dim);font-weight:400;">(클릭 복사)</span></div>
-        <div class="kd-titles">${(d.bestTitles||[]).map((t,i)=>`<div class="kd-title-item" onclick="cpRaw2('${t.replace(/'/g,"\\'")}',this)"><span style="color:var(--dim);font-size:10px;min-width:16px;">${i+1}</span><span style="flex:1;">${t}</span><span style="color:var(--dim);font-size:10px;">복사</span></div>`).join('')}</div>
-      </div>
+      <div class="kd-section"><div class="kd-sec-title">✍️ 추천 제목 <span style="font-size:10px;color:var(--dim)">(클릭 복사)</span></div>
+        <div class="kd-titles">${(d.bestTitles||[]).map((t,i)=>`<div class="kd-title-item" onclick="cpRaw2('${t.replace(/'/g,"\\'")}',this)"><span style="color:var(--dim);font-size:10px;min-width:14px">${i+1}</span><span style="flex:1">${t}</span><span style="color:var(--dim);font-size:10px">복사</span></div>`).join('')}</div></div>
       <div class="kd-section"><div class="kd-sec-title">🏷️ 추천 태그</div><div class="kd-tags">${(d.tags||[]).map(t=>`<span class="kd-tag">${t}</span>`).join('')}</div></div>
       <div class="kd-section"><div class="kd-sec-title">⚠️ 주의사항</div><div class="kd-text">${d.warning||'—'}</div></div>
-      <div style="display:flex;gap:8px;margin-top:4px;">
-        <button class="wbtn primary" style="flex:1;" onclick="sk('${kw}');closeModal('kwModal');">이 키워드로 분석</button>
-        <button class="wbtn" style="flex:1;" onclick="openTop20('${kw}')">상위 블로그 TOP 20</button>
+      <div style="display:flex;gap:7px;margin-top:4px;">
+        <button class="wbtn primary" style="flex:1" onclick="sk('${kw}');closeModal('kwModal');">이 키워드로 분석</button>
+        <button class="wbtn" style="flex:1" onclick="openTop20('${kw}')">상위 블로그 TOP 20</button>
       </div>`;
-  }catch(e){document.getElementById('modalBody').innerHTML=`<div style="padding:20px;color:var(--red);font-size:13px;">오류: ${e.message}</div>`;}
+  }catch(e){document.getElementById('modalBody').innerHTML=`<div style="padding:18px;color:var(--red);font-size:13px;">오류: ${e.message}</div>`;}
 }
 
 // ── TOP 20 모달 ──
 async function openTop20(kw){
-  const tk=kw||curKw; if(!tk)return;
+  const tk=kw||curKw;if(!tk)return;
   document.getElementById('top20Kw').textContent=tk;
   document.getElementById('top20Modal').classList.add('show');
   closeModal('kwModal');
-  document.getElementById('top20Body').innerHTML='<div class="modal-spin-wrap"><div class="modal-spin"></div><span style="font-size:12px;color:var(--muted)">상위 블로그 분석 중...</span></div>';
+  document.getElementById('top20Body').innerHTML='<div class="modal-spin-wrap"><div class="modal-spin"></div><span style="font-size:12px;color:var(--muted)">분석 중...</span></div>';
   try{
-    const sys=`Korean Naver blog expert. Reply ONLY pure JSON, no markdown.`;
-    const p=`"${tk}" 상위노출 블로그 TOP20 패턴. JSON:
-{"blogs":[{"rank":1,"title":"실제같은 블로그 포스팅 제목 (키워드 포함)","words":"2,450","images":"7","views":"12,400","age":"23일","ageType":"new"},{"rank":2,"title":"제목2","words":"3,100","images":"9","views":"8,200","age":"45일","ageType":"old"},{"rank":3,"title":"제목3","words":"1,900","images":"5","views":"6,700","age":"12일","ageType":"new"},{"rank":4,"title":"제목4","words":"2,800","images":"8","views":"5,100","age":"67일","ageType":"old"},{"rank":5,"title":"제목5","words":"2,200","images":"6","views":"4,800","age":"18일","ageType":"new"},{"rank":6,"title":"제목6","words":"1,700","images":"4","views":"4,200","age":"89일","ageType":"old"},{"rank":7,"title":"제목7","words":"3,400","images":"11","views":"3,900","age":"9일","ageType":"new"},{"rank":8,"title":"제목8","words":"2,600","images":"7","views":"3,500","age":"34일","ageType":"old"},{"rank":9,"title":"제목9","words":"1,800","images":"5","views":"3,100","age":"56일","ageType":"old"},{"rank":10,"title":"제목10","words":"2,100","images":"6","views":"2,900","age":"14일","ageType":"new"},{"rank":11,"title":"제목11","words":"2,900","images":"8","views":"2,700","age":"78일","ageType":"old"},{"rank":12,"title":"제목12","words":"1,600","images":"4","views":"2,500","age":"6일","ageType":"new"},{"rank":13,"title":"제목13","words":"2,400","images":"7","views":"2,300","age":"43일","ageType":"old"},{"rank":14,"title":"제목14","words":"3,200","images":"10","views":"2,100","age":"21일","ageType":"new"},{"rank":15,"title":"제목15","words":"1,900","images":"5","views":"1,900","age":"65일","ageType":"old"},{"rank":16,"title":"제목16","words":"2,700","images":"8","views":"1,800","age":"11일","ageType":"new"},{"rank":17,"title":"제목17","words":"2,000","images":"6","views":"1,600","age":"52일","ageType":"old"},{"rank":18,"title":"제목18","words":"1,500","images":"4","views":"1,400","age":"33일","ageType":"old"},{"rank":19,"title":"제목19","words":"2,300","images":"7","views":"1,200","age":"8일","ageType":"new"},{"rank":20,"title":"제목20","words":"2,800","images":"9","views":"1,100","age":"76일","ageType":"old"}],"pattern":"상위 블로그 공통 패턴 3~4문장.","avgWords":"2,350","avgImages":"6.8","newRatio":"40%"}`;
-    const raw=await callGroqWithRetry(p,sys,3000);
+    const raw=await callGroqWithRetry(`"${tk}" 상위노출 블로그 TOP20. JSON:{"blogs":[{"rank":1,"title":"제목(키워드포함)","words":"2,450","images":"7","views":"12,400","age":"23일","ageType":"new"},{"rank":2,"title":"제목2","words":"3,100","images":"9","views":"8,200","age":"45일","ageType":"old"},{"rank":3,"title":"제목3","words":"1,900","images":"5","views":"6,700","age":"12일","ageType":"new"},{"rank":4,"title":"제목4","words":"2,800","images":"8","views":"5,100","age":"67일","ageType":"old"},{"rank":5,"title":"제목5","words":"2,200","images":"6","views":"4,800","age":"18일","ageType":"new"},{"rank":6,"title":"제목6","words":"1,700","images":"4","views":"4,200","age":"89일","ageType":"old"},{"rank":7,"title":"제목7","words":"3,400","images":"11","views":"3,900","age":"9일","ageType":"new"},{"rank":8,"title":"제목8","words":"2,600","images":"7","views":"3,500","age":"34일","ageType":"old"},{"rank":9,"title":"제목9","words":"1,800","images":"5","views":"3,100","age":"56일","ageType":"old"},{"rank":10,"title":"제목10","words":"2,100","images":"6","views":"2,900","age":"14일","ageType":"new"},{"rank":11,"title":"제목11","words":"2,900","images":"8","views":"2,700","age":"78일","ageType":"old"},{"rank":12,"title":"제목12","words":"1,600","images":"4","views":"2,500","age":"6일","ageType":"new"},{"rank":13,"title":"제목13","words":"2,400","images":"7","views":"2,300","age":"43일","ageType":"old"},{"rank":14,"title":"제목14","words":"3,200","images":"10","views":"2,100","age":"21일","ageType":"new"},{"rank":15,"title":"제목15","words":"1,900","images":"5","views":"1,900","age":"65일","ageType":"old"},{"rank":16,"title":"제목16","words":"2,700","images":"8","views":"1,800","age":"11일","ageType":"new"},{"rank":17,"title":"제목17","words":"2,000","images":"6","views":"1,600","age":"52일","ageType":"old"},{"rank":18,"title":"제목18","words":"1,500","images":"4","views":"1,400","age":"33일","ageType":"old"},{"rank":19,"title":"제목19","words":"2,300","images":"7","views":"1,200","age":"8일","ageType":"new"},{"rank":20,"title":"제목20","words":"2,800","images":"9","views":"1,100","age":"76일","ageType":"old"}],"pattern":"상위 블로그 패턴 3문장.","avgWords":"2,350","avgImages":"6.8","newRatio":"40%"}`,`Korean Naver blog expert. Reply ONLY pure JSON.`,3000);
     const d=sj(raw);
     const rc=r=>r===1?'r1':r===2?'r2':r===3?'r3':'';
     const hl=t=>t.replace(new RegExp(tk.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'),`<span class="kh">${tk}</span>`);
     document.getElementById('top20Body').innerHTML=`
-      <div class="top20-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
-        <div class="kd-mc"><div class="kd-mc-lbl">평균 글자수</div><div class="kd-mc-val" style="color:var(--blue)">${d.avgWords}</div></div>
-        <div class="kd-mc"><div class="kd-mc-lbl">평균 이미지</div><div class="kd-mc-val" style="color:var(--orange)">${d.avgImages}장</div></div>
-        <div class="kd-mc"><div class="kd-mc-lbl">신규글 비율</div><div class="kd-mc-val" style="color:var(--green)">${d.newRatio}</div></div>
-      </div>
-      <div class="top20-pattern"><div class="top20-pattern-title">📊 공통 패턴 분석</div><div class="top20-pattern-text">${d.pattern}</div></div>
+      <div class="top20-stats"><div class="kd-mc"><div class="kd-mc-lbl">평균 글자수</div><div class="kd-mc-val" style="color:var(--blue)">${d.avgWords}</div></div><div class="kd-mc"><div class="kd-mc-lbl">평균 이미지</div><div class="kd-mc-val" style="color:var(--orange)">${d.avgImages}장</div></div><div class="kd-mc"><div class="kd-mc-lbl">신규글 비율</div><div class="kd-mc-val" style="color:var(--green)">${d.newRatio}</div></div></div>
+      <div class="top20-pattern"><div class="top20-pattern-title">📊 공통 패턴</div><div class="top20-pattern-text">${d.pattern}</div></div>
       <div class="top20-header"><div>순위</div><div>제목</div><div style="text-align:center">글자수</div><div style="text-align:center">이미지</div><div style="text-align:center">조회수</div><div style="text-align:center">글나이</div></div>
-      <div class="top20-list">${(d.blogs||[]).map(b=>`
-        <div class="top20-row">
-          <div class="t20-rank ${rc(b.rank)}">${b.rank}</div>
-          <div class="t20-title">${hl(b.title)}</div>
-          <div class="t20-words">${b.words}자</div>
-          <div class="t20-imgs">📷${b.images}</div>
-          <div class="t20-views">${b.views}</div>
-          <div class="t20-age"><span class="age-badge ${b.ageType==='new'?'age-new':'age-old'}">${b.age}</span></div>
-        </div>`).join('')}</div>`;
-  }catch(e){document.getElementById('top20Body').innerHTML=`<div style="padding:20px;color:var(--red);">오류: ${e.message}</div>`;}
+      <div class="top20-list">${(d.blogs||[]).map(b=>`<div class="top20-row"><div class="t20-rank ${rc(b.rank)}">${b.rank}</div><div class="t20-title">${hl(b.title)}</div><div class="t20-words">${b.words}자</div><div class="t20-imgs">📷${b.images}</div><div class="t20-views">${b.views}</div><div class="t20-age"><span class="age-badge ${b.ageType==='new'?'age-new':'age-old'}">${b.age}</span></div></div>`).join('')}</div>`;
+  }catch(e){document.getElementById('top20Body').innerHTML=`<div style="padding:18px;color:var(--red);">오류: ${e.message}</div>`;}
 }
 
-// ── SNS 콘텐츠 재생성 ──
-function swSNS(type,el){
-  document.querySelectorAll('.sns-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.sns-content').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('sns-'+type).classList.add('active');
-}
-async function regenSNS(type){
-  if(!curKw) return;
-  const el = document.getElementById('sno-'+type);
-  el.textContent = '생성 중...';
-  const prompts = {
-    insta: `키워드 "${curKw}" 네이버 블로그 내용 기반 인스타그램 캡션. 이모지 풍부하게, 해시태그 10개 포함, 150자 내외. 텍스트만.`,
-    reels: `키워드 "${curKw}" 인스타그램 릴스/숏폼 스크립트. 훅(3초)→본문(30초)→CTA(5초) 구조. 말하듯 구어체. 텍스트만.`,
-    threads: `키워드 "${curKw}" 스레드(Threads) 연속 포스팅 5개. 각 140자 내외. 1→2→3→4→5 흐름으로. 이모지 포함. 텍스트만.`
-  };
-  try {
-    const r = await callGroqWithRetry(prompts[type], '당신은 SNS 마케팅 전문가입니다.', 800);
-    el.textContent = r;
-  } catch(e) { el.textContent = '오류: ' + e.message; }
-}
-function cpSNS(type){ navigator.clipboard.writeText(document.getElementById('sno-'+type).textContent).then(()=>alert('복사되었습니다!')); }
-
-// ── 제목 SEO 점수 체커 ──
-async function checkTitleSEO(){
-  const title = document.getElementById('titleCheckInput').value.trim();
-  if(!title) return;
-  const result = document.getElementById('titleCheckResult');
-  result.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">분석 중...</div>';
-  try {
-    const sys = `Korean Naver blog SEO expert. Reply ONLY pure JSON, no markdown.`;
-    const p = `네이버 블로그 제목 SEO 분석: "${title}" (키워드: "${curKw||'미지정'}"). JSON:
-{"score":78,"grade":"B+","checks":[{"pass":true,"item":"키워드 앞쪽 배치","desc":"제목 앞 1/3에 키워드 포함"},{"pass":false,"item":"적정 길이 (25~35자)","desc":"현재 XX자, 권장 25~35자"},{"pass":true,"item":"숫자/구체성","desc":"숫자나 구체적 표현 포함"},{"pass":false,"item":"클릭 유도 표현","desc":"감성 표현이나 궁금증 유발 요소 없음"},{"pass":true,"item":"중복 키워드 없음","desc":"키워드 반복 없음"}],"suggestion":"개선된 제목 제안 1개","reason":"점수 이유 1문장"}`;
-    const raw = await callGroqWithRetry(p, sys, 800);
-    const d = sj(raw);
-    const scoreColor = d.score>=80?'var(--green)':d.score>=60?'var(--orange)':'var(--red)';
-    const scoreBg = d.score>=80?'var(--greenBg)':d.score>=60?'var(--orangeBg)':'var(--redBg)';
-    result.innerHTML = `
-      <div class="seo-score-wrap">
-        <div class="seo-score-circle" style="background:${scoreBg};color:${scoreColor}">
-          <div class="seo-score-num">${d.score}</div>
-          <div class="seo-score-txt">${d.grade||''}</div>
-        </div>
-        <div class="seo-checks">
-          ${(d.checks||[]).map(c=>`<div class="seo-check-item"><span class="seo-check-icon">${c.pass?'✅':'❌'}</span><span style="color:${c.pass?'var(--ink2)':'var(--muted)'}">${c.item}</span></div>`).join('')}
-        </div>
-      </div>
-      ${d.suggestion?`<div style="padding:10px 12px;background:var(--greenBg);border:1px solid var(--greenBorder);border-radius:8px;font-size:12px;margin-top:8px;">💡 <strong>개선 제안:</strong> ${d.suggestion}</div>`:''}`;
-  } catch(e) { result.innerHTML = `<div style="color:var(--red);font-size:12px;padding:8px 0;">오류: ${e.message}</div>`; }
-}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function closeModalOverlay(e,id){if(e.target.classList.contains('modal-overlay'))closeModal(id);}
 function cpRaw2(txt,el){navigator.clipboard.writeText(txt).then(()=>{const s=el.querySelector('span:last-child');if(s){s.textContent='✅';setTimeout(()=>s.textContent='복사',1500);}});}
 </script>
 </body>
