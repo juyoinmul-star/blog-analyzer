@@ -278,6 +278,53 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
 .age-old{background:var(--orangeBg);color:var(--orange);}
 
 @media(max-width:780px){.metrics{grid-template-columns:repeat(2,1fr);}.col2,.col3{grid-template-columns:1fr;}.revenue-grid{grid-template-columns:1fr;}header{padding:0 14px;}.hero{padding:34px 14px 24px;}.result{padding:0 12px 60px;}.groq-in{width:120px;}}
+
+/* ── 이슈성/정보성/상업성 ── */
+.intent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.intent-item{padding:11px 10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;text-align:center;}
+.intent-label{font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:5px;}
+.intent-score{font-family:'Gmarket Sans',sans-serif;font-size:20px;font-weight:700;margin-bottom:3px;}
+.intent-bar{height:4px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px;}
+.intent-bar-fill{height:100%;border-radius:3px;}
+.intent-desc{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4;}
+
+/* ── 성별/연령 ── */
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.demo-item{padding:11px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
+.demo-lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;}
+.gender-bars{display:flex;gap:6px;align-items:flex-end;height:44px;}
+.g-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.g-bar{width:100%;border-radius:4px 4px 0 0;transition:height 1s ease;}
+.g-lbl{font-size:9px;color:var(--dim);font-weight:700;}
+.g-val{font-size:10px;font-family:'DM Mono',monospace;color:var(--ink2);}
+.age-bars{display:flex;gap:4px;align-items:flex-end;height:44px;}
+.age-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.age-bar{width:100%;border-radius:3px 3px 0 0;transition:height 1s ease;}
+.age-lbl{font-size:8px;color:var(--dim);}
+.age-val{font-size:9px;font-family:'DM Mono',monospace;color:var(--ink2);}
+
+/* ── SNS 변환 ── */
+.sns-tabs{display:flex;gap:4px;margin-bottom:10px;}
+.sns-tab{padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);font-family:'Noto Sans KR',sans-serif;color:var(--muted);transition:all .15s;}
+.sns-tab.active{background:var(--purple);color:white;border-color:var(--purple);}
+.sns-content{display:none;}
+.sns-content.active{display:block;}
+.sns-output{font-size:12px;line-height:1.9;color:var(--ink2);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-height:140px;max-height:280px;overflow-y:auto;white-space:pre-wrap;scrollbar-width:thin;}
+
+/* ── 제목 SEO 체커 ── */
+.title-checker{display:flex;gap:7px;margin-bottom:10px;}
+.title-checker-input{flex:1;padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;color:var(--ink);}
+.title-checker-input:focus{border-color:var(--green);}
+.title-check-btn{padding:9px 16px;background:var(--green);color:white;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;}
+.title-check-btn:hover{background:var(--green2);}
+.seo-score-wrap{display:flex;align-items:center;gap:14px;padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;}
+.seo-score-circle{width:56px;height:56px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Gmarket Sans',sans-serif;font-weight:700;flex-shrink:0;}
+.seo-score-num{font-size:20px;line-height:1;}
+.seo-score-txt{font-size:9px;margin-top:1px;}
+.seo-checks{display:flex;flex-direction:column;gap:5px;flex:1;}
+.seo-check-item{display:flex;align-items:center;gap:6px;font-size:11px;}
+.seo-check-icon{font-size:12px;flex-shrink:0;}
+
 </style>
 </head>
 <body>
@@ -441,8 +488,40 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
       </div>
     </div>
     <div class="card">
-      <div class="card-head"><div class="card-title">📚 시리즈 기획</div></div>
-      <div class="card-body"><div class="series-list" id="seriesList"></div></div>
+      <div class="card-head">
+        <div class="card-title">🎯 키워드 성격 분석</div>
+        <span class="ai-tag" style="font-size:10px;padding:2px 8px;">AI</span>
+      </div>
+      <div class="card-body">
+        <div class="intent-grid" id="intentGrid"></div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.6;" id="intentDesc"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col2" style="margin-bottom:13px;">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">👥 타겟 독자 분석</div>
+        <span class="ai-tag" style="font-size:10px;padding:2px 8px;">AI추정</span>
+      </div>
+      <div class="card-body">
+        <div class="demo-grid" id="demoGrid"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:9px;line-height:1.6;" id="demoDesc"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">✏️ 제목 SEO 점수</div>
+        <span class="sec-badge">실시간 체크</span>
+      </div>
+      <div class="card-body">
+        <div class="title-checker">
+          <input class="title-checker-input" id="titleCheckInput" placeholder="제목 입력 후 SEO 점수 분석" onkeydown="if(event.key==='Enter')checkTitleSEO()">
+          <button class="title-check-btn" onclick="checkTitleSEO()">분석</button>
+        </div>
+        <div id="titleCheckResult"></div>
+      </div>
     </div>
   </div>
 
@@ -479,15 +558,43 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
       </div>
     </div>
   </div>
-
-  <div class="card">
-    <div class="card-head">
-      <div class="card-title">💰 수익화 전략</div>
-      <span class="sec-badge">4가지 채널</span>
-    </div>
-    <div class="card-body"><div class="revenue-grid" id="revGrid"></div></div>
-  </div>
 </div>
+</div>
+
+  <div class="card" style="margin-bottom:13px;">
+    <div class="card-head">
+      <div class="card-title">📱 SNS 콘텐츠 변환</div>
+      <span class="sec-badge" style="background:var(--purpleBg);color:var(--purple);">인스타/스레드</span>
+    </div>
+    <div class="card-body">
+      <div class="sns-tabs">
+        <button class="sns-tab active" onclick="swSNS('insta',this)">📸 인스타 캡션</button>
+        <button class="sns-tab" onclick="swSNS('reels',this)">🎬 릴스 스크립트</button>
+        <button class="sns-tab" onclick="swSNS('threads',this)">🧵 스레드</button>
+      </div>
+      <div class="sns-content active" id="sns-insta">
+        <div class="sns-output" id="sno-insta">분석 완료 후 생성됩니다...</div>
+        <div class="write-acts" style="margin-top:8px;">
+          <button class="wbtn primary" onclick="cpSNS('insta')">복사하기</button>
+          <button class="wbtn" onclick="regenSNS('insta')">다시 생성</button>
+        </div>
+      </div>
+      <div class="sns-content" id="sns-reels">
+        <div class="sns-output" id="sno-reels">재생성 버튼을 눌러주세요</div>
+        <div class="write-acts" style="margin-top:8px;">
+          <button class="wbtn primary" onclick="cpSNS('reels')">복사하기</button>
+          <button class="wbtn" onclick="regenSNS('reels')">다시 생성</button>
+        </div>
+      </div>
+      <div class="sns-content" id="sns-threads">
+        <div class="sns-output" id="sno-threads">재생성 버튼을 눌러주세요</div>
+        <div class="write-acts" style="margin-top:8px;">
+          <button class="wbtn primary" onclick="cpSNS('threads')">복사하기</button>
+          <button class="wbtn" onclick="regenSNS('threads')">다시 생성</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <script>
 // ── API 키 관리 ──
@@ -615,22 +722,19 @@ JSON:
       `당신은 네이버 블로그 SEO 전문 작가입니다.`, 2500
     );
 
-    // STEP 5: 수익화
-    setSt('수익화 분석 중...');
+    // STEP 5: 키워드 성격 + 타겟 독자 + SNS
+    setSt('타겟 독자 및 SNS 콘텐츠 분석 중...');
     setStep(5);
     await sleep(5000);
-    const sys4 = `Korean monetization expert. Reply ONLY pure JSON.`;
-    const raw4 = await callGroqWithRetry(
-      `키워드 "${kw}" 블로그 수익화. JSON: {"adsense":{"cpc":"420원","monthlyEst":"월 8~15만원","keywords":["kw1","kw2","kw3"]},"coupang":{"commission":"3~8%","products":["상품1","상품2","상품3"],"monthlyEst":"월 5~12만원"},"shoppingConnect":{"opportunity":"높음","categories":["카테고리1","카테고리2"],"monthlyEst":"월 10~20만원","tip":"팁"},"lecture":{"convRate":"2~5%","targetKw":["kw1","kw2","kw3"],"tip":"강의연계팁"}}`,
-      sys4, 1200
+    const sys5 = `Korean blog SNS marketing expert. Reply ONLY pure JSON, no markdown.`;
+    const raw5 = await callGroqWithRetry(
+      `키워드 "${kw}" 분석. JSON:{"intentAnalysis":{"issue":35,"info":80,"commercial":45,"issueDesc":"이슈성 한줄","infoDesc":"정보성 한줄","commDesc":"상업성 한줄","summary":"키워드 성격 요약 1문장"},"demographic":{"maleRatio":45,"ageGroups":[{"age":"10대","pct":5},{"age":"20대","pct":25},{"age":"30대","pct":35},{"age":"40대","pct":25},{"age":"50대+","pct":10}],"summary":"주요 독자층 특성 1문장"},"snsInsta":"인스타 캡션 (이모지 포함, 해시태그 10개, 150자 내외)"}`,
+      sys5, 1500
     );
-    const d4 = sj(raw4);
+    const d5 = sj(raw5);
 
-    // 실제 데이터 병합
-    if(hasReal) {
-      d1.naverReal = naverData;
-    }
-    D = { ...d1, titles:d2.titles, blogDraft, revenue:d4, kw, hasReal };
+    if(hasReal) { d1.naverReal = naverData; }
+    D = { ...d1, titles:d2.titles, blogDraft, intentAnalysis:d5.intentAnalysis, demographic:d5.demographic, snsInsta:d5.snsInsta, kw, hasReal };
     hideLoad();
     render(D);
   } catch(e) { hideLoad(); showErr(e.message); }
@@ -750,8 +854,6 @@ function render(d) {
     </svg>`;
 
   // 시리즈
-  document.getElementById('seriesList').innerHTML = (d.series||[]).map((s,i)=>`
-    <div class="series-item"><span class="series-num">${i+1}편</span><div><div class="series-title">${s.title}</div><div class="series-sub">${s.desc}</div></div></div>`).join('');
 
   // 제목
   document.getElementById('titleList').innerHTML = (d.titles||[]).map((t,i)=>`
@@ -764,21 +866,53 @@ function render(d) {
   document.getElementById('wo-hook').textContent = '재생성 버튼을 눌러주세요';
   document.getElementById('wo-outline').textContent = '재생성 버튼을 눌러주세요';
 
-  // 수익화
-  const rv = d.revenue||{};
-  const revCards = [
-    {icon:'💸',name:'애드센스',badge:'광고수익',bc:'var(--blueBg)',bt:'var(--blue)',amount:rv.adsense?.monthlyEst||'—',desc:`CPC: ${rv.adsense?.cpc||'—'}`,kws:rv.adsense?.keywords||[]},
-    {icon:'🛍️',name:'쿠팡파트너스',badge:'제휴수익',bc:'var(--orangeBg)',bt:'var(--orange)',amount:rv.coupang?.monthlyEst||'—',desc:`커미션: ${rv.coupang?.commission||'—'}`,kws:rv.coupang?.products||[]},
-    {icon:'🛒',name:'네이버 쇼핑커넥트',badge:'쇼핑연계',bc:'var(--greenBg)',bt:'var(--green2)',amount:rv.shoppingConnect?.monthlyEst||'—',desc:rv.shoppingConnect?.tip||'—',kws:rv.shoppingConnect?.categories||[]},
-    {icon:'🎓',name:'강의 유입',badge:'강의판매',bc:'var(--purpleBg)',bt:'var(--purple)',amount:`전환율 ${rv.lecture?.convRate||'2~5%'}`,desc:rv.lecture?.tip||'—',kws:rv.lecture?.targetKw||[]},
+
+
+  // ── 키워드 성격 분석
+  const intentData = d.intentAnalysis || {};
+  const intents = [
+    {label:'이슈성', score: intentData.issue||0, color:'var(--red)', desc:intentData.issueDesc||''},
+    {label:'정보성', score: intentData.info||0, color:'var(--blue)', desc:intentData.infoDesc||''},
+    {label:'상업성', score: intentData.commercial||0, color:'var(--orange)', desc:intentData.commDesc||''},
   ];
-  document.getElementById('revGrid').innerHTML = revCards.map(c=>`
-    <div class="rev-card">
-      <div class="rev-card-top"><span class="rev-icon">${c.icon}</span><span class="rev-name">${c.name}</span><span class="rev-badge" style="background:${c.bc};color:${c.bt}">${c.badge}</span></div>
-      <div class="rev-amount" style="color:${c.bt}">${c.amount}</div>
-      <div class="rev-desc">${c.desc}</div>
-      <div class="rev-kws">${(c.kws||[]).map(k=>`<span class="rev-kw">${k}</span>`).join('')}</div>
+  document.getElementById('intentGrid').innerHTML = intents.map(it=>`
+    <div class="intent-item">
+      <div class="intent-label">${it.label}</div>
+      <div class="intent-score" style="color:${it.color}">${it.score}점</div>
+      <div class="intent-bar"><div class="intent-bar-fill" style="width:${it.score}%;background:${it.color}"></div></div>
+      <div class="intent-desc">${it.desc}</div>
     </div>`).join('');
+  document.getElementById('intentDesc').textContent = intentData.summary||'';
+
+  // ── 타겟 독자 분석
+  const demo = d.demographic || {};
+  const genderM = demo.maleRatio||50, genderF = 100-genderM;
+  const ages = demo.ageGroups || [{age:'10대',pct:5},{age:'20대',pct:20},{age:'30대',pct:35},{age:'40대',pct:25},{age:'50대+',pct:15}];
+  const maxAge = Math.max(...ages.map(a=>a.pct));
+  document.getElementById('demoGrid').innerHTML = `
+    <div class="demo-item">
+      <div class="demo-lbl">성별 비율</div>
+      <div class="gender-bars">
+        <div class="g-bar-wrap">
+          <div class="g-bar" style="height:${genderM*0.44}px;background:var(--blue)"></div>
+          <div class="g-lbl">남</div><div class="g-val">${genderM}%</div>
+        </div>
+        <div class="g-bar-wrap">
+          <div class="g-bar" style="height:${genderF*0.44}px;background:#f472b6"></div>
+          <div class="g-lbl">여</div><div class="g-val">${genderF}%</div>
+        </div>
+      </div>
+    </div>
+    <div class="demo-item">
+      <div class="demo-lbl">연령별 비율</div>
+      <div class="age-bars">
+        ${ages.map(a=>`<div class="age-bar-wrap"><div class="age-bar" style="height:${Math.round((a.pct/maxAge)*44)}px;background:var(--green)"></div><div class="age-lbl">${a.age}</div><div class="age-val">${a.pct}%</div></div>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('demoDesc').textContent = demo.summary||'';
+
+  // ── SNS 인스타 기본 생성
+  document.getElementById('sno-insta').textContent = d.snsInsta||'재생성 버튼을 눌러주세요';
 
   document.getElementById('result').classList.add('show');
   document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
@@ -872,6 +1006,57 @@ async function openTop20(kw){
           <div class="t20-age"><span class="age-badge ${b.ageType==='new'?'age-new':'age-old'}">${b.age}</span></div>
         </div>`).join('')}</div>`;
   }catch(e){document.getElementById('top20Body').innerHTML=`<div style="padding:20px;color:var(--red);">오류: ${e.message}</div>`;}
+}
+
+// ── SNS 콘텐츠 재생성 ──
+function swSNS(type,el){
+  document.querySelectorAll('.sns-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sns-content').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sns-'+type).classList.add('active');
+}
+async function regenSNS(type){
+  if(!curKw) return;
+  const el = document.getElementById('sno-'+type);
+  el.textContent = '생성 중...';
+  const prompts = {
+    insta: `키워드 "${curKw}" 네이버 블로그 내용 기반 인스타그램 캡션. 이모지 풍부하게, 해시태그 10개 포함, 150자 내외. 텍스트만.`,
+    reels: `키워드 "${curKw}" 인스타그램 릴스/숏폼 스크립트. 훅(3초)→본문(30초)→CTA(5초) 구조. 말하듯 구어체. 텍스트만.`,
+    threads: `키워드 "${curKw}" 스레드(Threads) 연속 포스팅 5개. 각 140자 내외. 1→2→3→4→5 흐름으로. 이모지 포함. 텍스트만.`
+  };
+  try {
+    const r = await callGroqWithRetry(prompts[type], '당신은 SNS 마케팅 전문가입니다.', 800);
+    el.textContent = r;
+  } catch(e) { el.textContent = '오류: ' + e.message; }
+}
+function cpSNS(type){ navigator.clipboard.writeText(document.getElementById('sno-'+type).textContent).then(()=>alert('복사되었습니다!')); }
+
+// ── 제목 SEO 점수 체커 ──
+async function checkTitleSEO(){
+  const title = document.getElementById('titleCheckInput').value.trim();
+  if(!title) return;
+  const result = document.getElementById('titleCheckResult');
+  result.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">분석 중...</div>';
+  try {
+    const sys = `Korean Naver blog SEO expert. Reply ONLY pure JSON, no markdown.`;
+    const p = `네이버 블로그 제목 SEO 분석: "${title}" (키워드: "${curKw||'미지정'}"). JSON:
+{"score":78,"grade":"B+","checks":[{"pass":true,"item":"키워드 앞쪽 배치","desc":"제목 앞 1/3에 키워드 포함"},{"pass":false,"item":"적정 길이 (25~35자)","desc":"현재 XX자, 권장 25~35자"},{"pass":true,"item":"숫자/구체성","desc":"숫자나 구체적 표현 포함"},{"pass":false,"item":"클릭 유도 표현","desc":"감성 표현이나 궁금증 유발 요소 없음"},{"pass":true,"item":"중복 키워드 없음","desc":"키워드 반복 없음"}],"suggestion":"개선된 제목 제안 1개","reason":"점수 이유 1문장"}`;
+    const raw = await callGroqWithRetry(p, sys, 800);
+    const d = sj(raw);
+    const scoreColor = d.score>=80?'var(--green)':d.score>=60?'var(--orange)':'var(--red)';
+    const scoreBg = d.score>=80?'var(--greenBg)':d.score>=60?'var(--orangeBg)':'var(--redBg)';
+    result.innerHTML = `
+      <div class="seo-score-wrap">
+        <div class="seo-score-circle" style="background:${scoreBg};color:${scoreColor}">
+          <div class="seo-score-num">${d.score}</div>
+          <div class="seo-score-txt">${d.grade||''}</div>
+        </div>
+        <div class="seo-checks">
+          ${(d.checks||[]).map(c=>`<div class="seo-check-item"><span class="seo-check-icon">${c.pass?'✅':'❌'}</span><span style="color:${c.pass?'var(--ink2)':'var(--muted)'}">${c.item}</span></div>`).join('')}
+        </div>
+      </div>
+      ${d.suggestion?`<div style="padding:10px 12px;background:var(--greenBg);border:1px solid var(--greenBorder);border-radius:8px;font-size:12px;margin-top:8px;">💡 <strong>개선 제안:</strong> ${d.suggestion}</div>`:''}`;
+  } catch(e) { result.innerHTML = `<div style="color:var(--red);font-size:12px;padding:8px 0;">오류: ${e.message}</div>`; }
 }
 function cpRaw2(txt,el){navigator.clipboard.writeText(txt).then(()=>{const s=el.querySelector('span:last-child');if(s){s.textContent='✅';setTimeout(()=>s.textContent='복사',1500);}});}
 </script>
