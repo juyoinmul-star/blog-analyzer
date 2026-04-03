@@ -303,6 +303,40 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
 .age-new{background:var(--greenBg);color:var(--green2);}
 .age-old{background:var(--orangeBg);color:var(--orange);}
 
+/* ── 글쓰기 탭 (새) ── */
+.write-section{background:var(--white);border:1px solid var(--border);border-radius:13px;overflow:hidden;box-shadow:var(--sh);margin-bottom:11px;}
+.write-section-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.write-section-title{font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.write-main-tabs{display:flex;gap:5px;padding:14px 18px 0;}
+.wmtab{padding:8px 16px;border-radius:9px 9px 0 0;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);border-bottom:none;background:var(--surface);color:var(--muted);font-family:'Noto Sans KR',sans-serif;transition:all .15s;}
+.wmtab.active{background:var(--white);color:var(--green);border-color:var(--green);border-bottom-color:var(--white);}
+.write-panel{display:none;padding:16px 18px;}
+.write-panel.active{display:block;}
+.write-form{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px;}
+.wf-full{grid-column:1/-1;}
+.wf-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.wf-input{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none;color:var(--ink);background:var(--surface);}
+.wf-input:focus{border-color:var(--green);}
+.wf-select{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none;color:var(--ink);background:var(--surface);cursor:pointer;}
+.wf-select:focus{border-color:var(--green);}
+.write-gen-btn{width:100%;padding:11px;background:var(--green);color:white;border:none;border-radius:9px;font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px;transition:all .18s;}
+.write-gen-btn:hover{background:var(--green2);}
+.write-gen-btn:disabled{opacity:.4;cursor:not-allowed;}
+.write-sub-tabs{display:flex;gap:4px;margin-bottom:9px;}
+.wstab{padding:5px 11px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Noto Sans KR',sans-serif;}
+.wstab.active{background:var(--green);color:white;border-color:var(--green);}
+.wsc{display:none;}
+.wsc.active{display:block;}
+.sns-sub-tabs{display:flex;gap:4px;margin-bottom:9px;}
+.snstab{padding:5px 11px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Noto Sans KR',sans-serif;}
+.snstab.active{background:var(--purple);color:white;border-color:var(--purple);}
+.snsc{display:none;}
+.snsc.active{display:block;}
+.write-output2{font-size:12px;line-height:1.9;color:var(--ink2);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px;min-height:180px;max-height:400px;overflow-y:auto;scrollbar-width:thin;white-space:pre-wrap;}
+.write-acts2{display:flex;gap:6px;margin-top:8px;}
+.write-tip{padding:9px 12px;background:var(--blueBg);border-radius:8px;font-size:11px;color:var(--blue);line-height:1.6;margin-bottom:10px;}
+@media(max-width:780px){.write-form{grid-template-columns:1fr;}}
+
 @media(max-width:780px){
   .metrics{grid-template-columns:repeat(2,1fr);}
   .col2,.col3{grid-template-columns:1fr;}
@@ -354,15 +388,7 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
   </div>
 </div>
 
-<div class="modal-overlay" id="top20Modal" onclick="closeModalOverlay(event,'top20Modal')">
-  <div class="modal wide">
-    <div class="modal-head">
-      <div class="modal-title">🏆 상위노출 블로그 TOP 20: <span class="modal-kw" id="top20Kw"></span></div>
-      <div class="modal-close" onclick="closeModal('top20Modal')">✕</div>
-    </div>
-    <div class="modal-body" id="top20Body"></div>
-  </div>
-</div>
+
 
 <div class="hero">
   <h1>블로그 키워드 하나로<br><em>상위노출 + 마케팅</em>까지</h1>
@@ -520,55 +546,100 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
     <div class="card-body"><div class="title-list" id="titleList"></div></div>
   </div>
 
-  <div class="col2" style="margin-bottom:11px;">
-    <div class="card">
-      <div class="card-head">
-        <div class="card-title">🤖 자동 글쓰기</div>
-        <span style="font-size:11px;color:var(--muted);">AI 초안</span>
+  <!-- ✍️ 콘텐츠 작성 섹션 -->
+  <div class="write-section">
+    <div class="write-section-head">
+      <div class="write-section-title">✍️ AI 콘텐츠 작성 <span style="font-size:11px;color:var(--muted);font-weight:400;">블로그·SNS 전문가 수준으로</span></div>
+      <span class="sec-badge" style="background:var(--purpleBg);color:var(--purple);">SEO 최적화</span>
+    </div>
+    <div class="write-main-tabs">
+      <button class="wmtab active" onclick="swWM('blog',this)">📝 블로그</button>
+      <button class="wmtab" onclick="swWM('sns',this)">📱 SNS</button>
+    </div>
+
+    <!-- 블로그 패널 -->
+    <div class="write-panel active" id="wp-blog">
+      <div class="write-tip">💡 아래 정보를 입력할수록 더 전문적인 글이 생성됩니다. 키워드는 분석 결과에서 자동 반영됩니다.</div>
+      <div class="write-form">
+        <div class="wf-full">
+          <div class="wf-label">업종 / 카테고리 <span style="color:var(--dim);font-weight:400">(예: 맛집, 뷰티, 강의, 인테리어)</span></div>
+          <input class="wf-input" id="wf-category" placeholder="예: 부산 맛집, 다이어트 식단, 온라인 강의">
+        </div>
+        <div>
+          <div class="wf-label">특징 / 차별점</div>
+          <input class="wf-input" id="wf-point" placeholder="예: 주차 가능, 가성비, 실후기 중심">
+        </div>
+        <div>
+          <div class="wf-label">타겟 독자</div>
+          <input class="wf-input" id="wf-target" placeholder="예: 30대 직장인, 다이어트 초보">
+        </div>
+        <div>
+          <div class="wf-label">톤앤매너</div>
+          <select class="wf-select" id="wf-tone">
+            <option value="정보형">📊 정보형 (객관적·전문적)</option>
+            <option value="체험형">🙋 체험형 (실제 경험담처럼)</option>
+            <option value="감성형">💛 감성형 (따뜻하고 공감형)</option>
+            <option value="전문가형">🎓 전문가형 (권위있고 신뢰감)</option>
+          </select>
+        </div>
+        <div>
+          <div class="wf-label">글 타입</div>
+          <select class="wf-select" id="wf-type">
+            <option value="full">📝 완성 포스팅 (2000자+)</option>
+            <option value="hook">🎣 후킹 도입부 3버전</option>
+            <option value="outline">📋 소제목 구조</option>
+          </select>
+        </div>
       </div>
-      <div class="card-body">
-        <div class="write-tabs">
-          <button class="wtab active" onclick="swW('full',this)">📝 블로그</button>
-          <button class="wtab" onclick="swW('hook',this)">🎣 도입부</button>
-          <button class="wtab" onclick="swW('outline',this)">📋 소제목</button>
-        </div>
-        <div class="wc active" id="wc-full">
-          <div class="write-output" id="wo-full">분석 완료 후 표시됩니다...</div>
-          <div class="write-acts"><button class="wbtn primary" onclick="cpWrite('full')">복사</button><button class="wbtn" onclick="regenW('full')">다시 생성</button></div>
-        </div>
-        <div class="wc" id="wc-hook">
-          <div class="write-output" id="wo-hook">재생성 버튼을 눌러주세요</div>
-          <div class="write-acts"><button class="wbtn primary" onclick="cpWrite('hook')">복사</button><button class="wbtn" onclick="regenW('hook')">다시 생성</button></div>
-        </div>
-        <div class="wc" id="wc-outline">
-          <div class="write-output" id="wo-outline">재생성 버튼을 눌러주세요</div>
-          <div class="write-acts"><button class="wbtn primary" onclick="cpWrite('outline')">복사</button><button class="wbtn" onclick="regenW('outline')">다시 생성</button></div>
-        </div>
+      <button class="write-gen-btn" id="blogGenBtn" onclick="genBlog()">✨ 블로그 글 생성하기</button>
+      <div class="write-output2" id="blog-output">업종, 특징, 타겟, 톤을 입력하고 생성 버튼을 눌러주세요.</div>
+      <div class="write-acts2">
+        <button class="wbtn primary" onclick="cpOut('blog-output')">복사</button>
+        <button class="wbtn" onclick="genBlog()">다시 생성</button>
       </div>
     </div>
-    <div class="card">
-      <div class="card-head">
-        <div class="card-title">📱 SNS 콘텐츠 변환</div>
-        <span class="sec-badge" style="background:var(--purpleBg);color:var(--purple);">인스타·스레드</span>
+
+    <!-- SNS 패널 -->
+    <div class="write-panel" id="wp-sns">
+      <div class="write-tip">💡 분석된 타겟·키워드 성격이 자동 반영됩니다. 추가 정보 입력 시 더욱 맞춤형으로 생성됩니다.</div>
+      <div class="write-form">
+        <div class="wf-full">
+          <div class="wf-label">핵심 메시지 / 강조할 내용</div>
+          <input class="wf-input" id="sns-point" placeholder="예: 줄서는 맛집인데 웨이팅 팁이 있다, 3개월 만에 -10kg 비결">
+        </div>
+        <div>
+          <div class="wf-label">톤앤매너</div>
+          <select class="wf-select" id="sns-tone">
+            <option value="공감형">💛 공감형 (친근하고 따뜻하게)</option>
+            <option value="정보전달형">📊 정보전달형 (팁·노하우 중심)</option>
+            <option value="후킹형">🔥 후킹형 (강한 첫문장·충격)</option>
+            <option value="스토리형">📖 스토리형 (경험담·서사)</option>
+          </select>
+        </div>
+        <div>
+          <div class="wf-label">타겟</div>
+          <input class="wf-input" id="sns-target" placeholder="예: 20대 여성, 부산 거주자, 다이어터">
+        </div>
       </div>
-      <div class="card-body">
-        <div class="sns-tabs">
-          <button class="sns-tab active" onclick="swSNS('insta',this)">📸 인스타</button>
-          <button class="sns-tab" onclick="swSNS('reels',this)">🎬 릴스</button>
-          <button class="sns-tab" onclick="swSNS('threads',this)">🧵 스레드</button>
-        </div>
-        <div class="sns-content active" id="sns-insta">
-          <div class="sns-output" id="sno-insta">분석 후 자동 생성됩니다...</div>
-          <div class="write-acts"><button class="wbtn primary" onclick="cpSNS('insta')">복사</button><button class="wbtn" onclick="regenSNS('insta')">다시 생성</button></div>
-        </div>
-        <div class="sns-content" id="sns-reels">
-          <div class="sns-output" id="sno-reels">재생성 버튼을 눌러주세요</div>
-          <div class="write-acts"><button class="wbtn primary" onclick="cpSNS('reels')">복사</button><button class="wbtn" onclick="regenSNS('reels')">다시 생성</button></div>
-        </div>
-        <div class="sns-content" id="sns-threads">
-          <div class="sns-output" id="sno-threads">재생성 버튼을 눌러주세요</div>
-          <div class="write-acts"><button class="wbtn primary" onclick="cpSNS('threads')">복사</button><button class="wbtn" onclick="regenSNS('threads')">다시 생성</button></div>
-        </div>
+      <div class="sns-sub-tabs">
+        <button class="snstab active" onclick="swSNS2('insta',this)">📸 인스타</button>
+        <button class="snstab" onclick="swSNS2('reels',this)">🎬 릴스</button>
+        <button class="snstab" onclick="swSNS2('threads',this)">🧵 스레드</button>
+      </div>
+      <div class="snsc active" id="snsc-insta">
+        <button class="write-gen-btn" onclick="genSNS('insta')">✨ 인스타 캡션 생성</button>
+        <div class="write-output2" id="sno2-insta">핵심 메시지와 톤을 입력하고 생성해주세요.</div>
+        <div class="write-acts2"><button class="wbtn primary" onclick="cpOut('sno2-insta')">복사</button><button class="wbtn" onclick="genSNS('insta')">다시 생성</button></div>
+      </div>
+      <div class="snsc" id="snsc-reels">
+        <button class="write-gen-btn" onclick="genSNS('reels')">✨ 릴스 스크립트 생성</button>
+        <div class="write-output2" id="sno2-reels">핵심 메시지와 톤을 입력하고 생성해주세요.</div>
+        <div class="write-acts2"><button class="wbtn primary" onclick="cpOut('sno2-reels')">복사</button><button class="wbtn" onclick="genSNS('reels')">다시 생성</button></div>
+      </div>
+      <div class="snsc" id="snsc-threads">
+        <button class="write-gen-btn" onclick="genSNS('threads')">✨ 스레드 포스팅 생성</button>
+        <div class="write-output2" id="sno2-threads">핵심 메시지와 톤을 입력하고 생성해주세요.</div>
+        <div class="write-acts2"><button class="wbtn primary" onclick="cpOut('sno2-threads')">복사</button><button class="wbtn" onclick="genSNS('threads')">다시 생성</button></div>
       </div>
     </div>
   </div>
@@ -809,7 +880,7 @@ function render(d){
       ${k.isGold?'<span class="tag tag-gold">황금</span>':''}
       <span class="gkw-score">${k.score}</span>
     </div>`).join('');
-  document.getElementById('top20BtnWrap').innerHTML='<button class="top20-btn" onclick="openTop20()">🏆 현재 키워드 상위노출 블로그 TOP 20 보기</button>';
+  document.getElementById('top20BtnWrap').innerHTML='';
 
   const rels=nr?nr.relatedKeywords:(d.relatedKws||[]).map(k=>({word:k.word,vol:k.vol,comp:k.comp||'없음'}));
   document.getElementById('relCnt').textContent=rels.length+'개';
@@ -855,43 +926,178 @@ function render(d){
   document.getElementById('demoDesc').textContent=demo.summary||'';
 
   document.getElementById('titleList').innerHTML=(d.titles||[]).map((t,i)=>`<div class="title-item" onclick="cpTitle(this)"><span class="ti-num">${i+1}</span><span class="ti-text">${t}</span><span class="ti-copy">클릭 복사</span></div>`).join('');
-  document.getElementById('wo-full').textContent=d.blogDraft||'생성 실패';
-  document.getElementById('wo-hook').textContent='재생성 버튼을 눌러주세요';
-  document.getElementById('wo-outline').textContent='재생성 버튼을 눌러주세요';
-  document.getElementById('sno-insta').textContent=d.snsInsta||'재생성 버튼을 눌러주세요';
-  document.getElementById('sno-reels').textContent='재생성 버튼을 눌러주세요';
-  document.getElementById('sno-threads').textContent='재생성 버튼을 눌러주세요';
+  // 글쓰기 섹션: 분석 결과 자동 반영 (타겟·키워드 성격은 buildCtx()에서 D 참조)
+  // 블로그 출력 초기화
+  document.getElementById('blog-output').textContent='업종, 특징, 타겟, 톤을 입력하고 생성 버튼을 눌러주세요.';
+  ['insta','reels','threads'].forEach(t=>{document.getElementById('sno2-'+t).textContent='핵심 메시지와 톤을 입력하고 생성해주세요.';});
 
   document.getElementById('result').classList.add('show');
   document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 // ── 유틸 ──
-function swW(type,el){document.querySelectorAll('.wtab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.wc').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('wc-'+type).classList.add('active');}
 function cpTitle(el){const t=el.querySelector('.ti-text').textContent;navigator.clipboard.writeText(t).then(()=>{const c=el.querySelector('.ti-copy');c.textContent='복사됨';setTimeout(()=>c.textContent='클릭 복사',1500);});}
-function cpWrite(type){navigator.clipboard.writeText(document.getElementById('wo-'+type).textContent).then(()=>alert('복사되었습니다!'));}
-async function regenW(type){
-  if(!curKw)return;const el=document.getElementById('wo-'+type);el.textContent='생성 중...';
-  const pm={
-    hook:'키워드"'+curKw+'" 블로그 도입부 후킹 3버전. 각 100~150자. 번호매겨서.',
-    outline:'키워드"'+curKw+'" 블로그 소제목 구조. 도입→소제목5~6개→마무리. 텍스트만.',
-    full:'키워드"'+curKw+'" 블로그 포스팅. 2000~2500자. 도입→소제목4개→마무리. 텍스트만.'
-  };
-  try{const r=await callGroq(pm[type],'당신은 네이버 블로그 SEO 전문 작가입니다.',2000);el.textContent=r;}catch(e){el.textContent='오류: '+e.message;}
+function cpOut(id){navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>alert('복사되었습니다!'));}
+
+// ── 글쓰기 탭 전환 ──
+function swWM(type,el){
+  document.querySelectorAll('.wmtab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.write-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('wp-'+type).classList.add('active');
+}
+function swSNS2(type,el){
+  document.querySelectorAll('.snstab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.snsc').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('snsc-'+type).classList.add('active');
 }
 
-// ── SNS ──
-function swSNS(type,el){document.querySelectorAll('.sns-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.sns-content').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('sns-'+type).classList.add('active');}
-async function regenSNS(type){
-  if(!curKw)return;const el=document.getElementById('sno-'+type);el.textContent='생성 중...';
-  const prompts={
-    insta:'키워드"'+curKw+'" 인스타그램 캡션. 이모지 풍부하게, 해시태그 10개, 150자 내외. 텍스트만.',
-    reels:'키워드"'+curKw+'" 인스타 릴스 스크립트. 훅(3초)→본문(30초)→CTA(5초). 구어체. 텍스트만.',
-    threads:'키워드"'+curKw+'" 스레드 연속 포스팅 5개. 각 140자 내외. 흐름있게. 이모지 포함. 텍스트만.'
-  };
-  try{const r=await callGroqWithRetry(prompts[type],'당신은 SNS 마케팅 전문가입니다.',700);el.textContent=r;}catch(e){el.textContent='오류: '+e.message;}
+// ── 공통 컨텍스트 빌더 ──
+function buildCtx(){
+  const kw=curKw||'';
+  const demo=D?.demographic||{};
+  const intent=D?.intentAnalysis||{};
+  const targetAI=demo.summary||'';
+  const intentSummary=intent.summary||'';
+  return {kw,targetAI,intentSummary};
 }
-function cpSNS(type){navigator.clipboard.writeText(document.getElementById('sno-'+type).textContent).then(()=>alert('복사되었습니다!'));}
+
+// ── 블로그 생성 ──
+async function genBlog(){
+  if(!curKw){alert('먼저 키워드 분석을 실행해주세요.');return;}
+  const btn=document.getElementById('blogGenBtn');
+  const out=document.getElementById('blog-output');
+  const category=document.getElementById('wf-category').value.trim();
+  const point=document.getElementById('wf-point').value.trim();
+  const target=document.getElementById('wf-target').value.trim();
+  const tone=document.getElementById('wf-tone').value;
+  const type=document.getElementById('wf-type').value;
+  const ctx=buildCtx();
+
+  btn.disabled=true;btn.textContent='생성 중...';out.textContent='AI가 글을 작성하고 있습니다...';
+
+  const targetFinal=target||ctx.targetAI||'일반 독자';
+  const intentNote=ctx.intentSummary?` 키워드 성격: ${ctx.intentSummary}.`:'';
+
+  const sysPrompt=`당신은 네이버 블로그 SEO 전문 작가입니다. 다음 원칙을 반드시 지키세요:
+1. 제목에 핵심 키워드를 앞쪽에 배치
+2. 도입부는 독자의 고민/문제로 시작해 공감 형성 (후킹)
+3. 소제목마다 키워드 자연스럽게 포함
+4. 숫자, 리스트, 구체적 정보 활용으로 신뢰도 UP
+5. 마무리에 명확한 CTA(행동 유도) 포함
+6. 유사문서 판정 피하는 자연스러운 문체
+7. ${tone} 톤으로 일관성 있게 작성`;
+
+  let prompt='';
+  if(type==='full'){
+    prompt=`키워드: "${ctx.kw}"
+업종/카테고리: ${category||'미지정'}
+특징/차별점: ${point||'없음'}
+타겟 독자: ${targetFinal}
+톤앤매너: ${tone}${intentNote}
+
+위 정보를 바탕으로 네이버 블로그 상위노출을 위한 완성 포스팅을 작성해주세요.
+- 분량: 2000~2500자
+- 구조: [후킹 도입부(200자)] → [소제목1~4 (각 400자+, 소제목에 키워드 포함)] → [마무리+CTA(200자)]
+- 소제목은 ## 형식으로 작성
+- 키워드를 자연스럽게 7~10회 분산 배치
+- 실제 경험담, 구체적 수치, 팁 포함으로 전문성 표현
+텍스트만 출력하세요.`;
+  } else if(type==='hook'){
+    prompt=`키워드: "${ctx.kw}", 타겟: ${targetFinal}, 톤: ${tone}, 업종: ${category||'미지정'}
+네이버 블로그 후킹 도입부 3가지 버전을 작성해주세요.
+- 각 버전 130~180자
+- 버전1: 독자 고민/문제 공감형
+- 버전2: 충격적 사실/수치 제시형  
+- 버전3: 스토리/경험 시작형
+- 각 버전 끝에 다음 내용이 궁금해지는 여운 포함
+텍스트만 출력하세요.`;
+  } else {
+    prompt=`키워드: "${ctx.kw}", 타겟: ${targetFinal}, 톤: ${tone}, 업종: ${category||'미지정'}
+SEO 최적화된 블로그 소제목 구조를 작성해주세요.
+- 전체 구조: 제목 → 도입 요약 → 소제목 5~6개 → 마무리
+- 소제목마다 해당 섹션에서 다룰 핵심 내용 1~2줄 설명
+- 소제목에 키워드 자연스럽게 포함
+- 독자가 계속 읽고 싶게 만드는 흐름
+텍스트만 출력하세요.`;
+  }
+
+  try{
+    const r=await callGroqWithRetry(prompt,sysPrompt,2500);
+    out.textContent=r;
+  }catch(e){out.textContent='오류: '+e.message;}
+  btn.disabled=false;btn.textContent='✨ 블로그 글 생성하기';
+}
+
+// ── SNS 생성 ──
+async function genSNS(type){
+  if(!curKw){alert('먼저 키워드 분석을 실행해주세요.');return;}
+  const out=document.getElementById('sno2-'+type);
+  const point=document.getElementById('sns-point').value.trim();
+  const tone=document.getElementById('sns-tone').value;
+  const target=document.getElementById('sns-target').value.trim();
+  const ctx=buildCtx();
+  const targetFinal=target||ctx.targetAI||'일반 독자';
+  const pointFinal=point||ctx.kw;
+
+  out.textContent='생성 중...';
+  const btns=document.querySelectorAll('.snsc.active .write-gen-btn');
+  btns.forEach(b=>{b.disabled=true;});
+
+  const sysPrompt=`당신은 국내 최고의 SNS 마케팅 전문가입니다. 플랫폼별 알고리즘과 사용자 행동을 깊이 이해하고, 높은 인게이지먼트를 만드는 콘텐츠를 작성합니다.`;
+
+  let prompt='';
+  if(type==='insta'){
+    prompt=`키워드: "${ctx.kw}"
+핵심 메시지: ${pointFinal}
+타겟: ${targetFinal}
+톤앤매너: ${tone}
+
+인스타그램 피드 캡션을 작성해주세요:
+- 첫 줄: 스크롤 멈추게 하는 강력한 후킹 문장 (궁금증 유발 또는 공감)
+- 본문: 핵심 내용을 3~4개 포인트로 전달 (이모지로 가독성 UP)
+- 마무리: 저장/공유 유도 CTA + 팔로우 유도
+- 해시태그: 대형태그 3개 + 중형태그 5개 + 소형/롱테일태그 5개 = 총 13개
+- 전체 200~250자 (해시태그 제외)
+텍스트만 출력하세요.`;
+  } else if(type==='reels'){
+    prompt=`키워드: "${ctx.kw}"
+핵심 메시지: ${pointFinal}
+타겟: ${targetFinal}
+톤앤매너: ${tone}
+
+인스타그램 릴스 스크립트를 작성해주세요:
+[훅 - 0~3초] 첫 화면에서 시선 잡는 문장 (의문형/충격/공감 중 택1)
+[문제 제시 - 3~8초] 타겟의 공통 고민/상황
+[해결/핵심 - 8~25초] 3가지 핵심 포인트 (각 포인트마다 자막 텍스트 제안 포함)
+[증거/신뢰 - 25~35초] 구체적 수치나 경험 근거
+[CTA - 35~40초] 저장·팔로우·댓글 유도
+※ 각 구간별로 나눠서 작성, 구어체로 자연스럽게
+텍스트만 출력하세요.`;
+  } else {
+    prompt=`키워드: "${ctx.kw}"
+핵심 메시지: ${pointFinal}
+타겟: ${targetFinal}
+톤앤매너: ${tone}
+
+스레드(Threads) 연속 포스팅 5개를 작성해주세요:
+- 1번: 강한 후킹 + 전체 내용 예고 (130자 내외)
+- 2번: 핵심 정보/팁 1 (구체적 수치나 사례 포함, 130자)
+- 3번: 핵심 정보/팁 2 (130자)
+- 4번: 핵심 정보/팁 3 또는 반전/놀라운 사실 (130자)
+- 5번: 마무리 + 댓글/저장 유도 CTA (130자)
+- 각 포스팅마다 이모지 2~3개 포함
+- 연결이 자연스럽게, 다음 포스팅이 궁금하게
+텍스트만 출력하세요.`;
+  }
+
+  try{
+    const r=await callGroqWithRetry(prompt,sysPrompt,1200);
+    out.textContent=r;
+  }catch(e){out.textContent='오류: '+e.message;}
+  btns.forEach(b=>{b.disabled=false;});
+}
 
 // ── 제목 SEO 체커 ──
 async function checkTitleSEO(){
@@ -937,32 +1143,11 @@ async function openKwDetail(kw,vol,comp){
       <div class="kd-section"><div class="kd-sec-title">⚠️ 주의사항</div><div class="kd-text">${d.warning||'없음'}</div></div>
       <div style="display:flex;gap:7px;margin-top:4px;">
         <button class="wbtn primary" style="flex:1" onclick="sk('${kw}');closeModal('kwModal');">이 키워드로 분석</button>
-        <button class="wbtn" style="flex:1" onclick="openTop20('${kw}')">상위 블로그 TOP 20</button>
+        
       </div>`;
   }catch(e){document.getElementById('modalBody').innerHTML=`<div style="padding:18px;color:var(--red);font-size:13px;">오류: ${e.message}</div>`;}
 }
 
-// ── TOP 20 모달 ──
-async function openTop20(kw){
-  const tk=kw||curKw;if(!tk)return;
-  document.getElementById('top20Kw').textContent=tk;
-  document.getElementById('top20Modal').classList.add('show');
-  closeModal('kwModal');
-  document.getElementById('top20Body').innerHTML='<div class="modal-spin-wrap"><div class="modal-spin"></div><span style="font-size:12px;color:var(--muted)">분석 중...</span></div>';
-  try{
-    const escapedTk=tk.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    const p_top20='"'+tk+'" 상위노출 블로그 TOP20. JSON:{"blogs":[{"rank":1,"title":"실제같은제목(키워드포함)","words":"2450","images":"7","views":"12400","age":"23일","ageType":"new"},{"rank":2,"title":"제목2","words":"3100","images":"9","views":"8200","age":"45일","ageType":"old"},{"rank":3,"title":"제목3","words":"1900","images":"5","views":"6700","age":"12일","ageType":"new"},{"rank":4,"title":"제목4","words":"2800","images":"8","views":"5100","age":"67일","ageType":"old"},{"rank":5,"title":"제목5","words":"2200","images":"6","views":"4800","age":"18일","ageType":"new"},{"rank":6,"title":"제목6","words":"1700","images":"4","views":"4200","age":"89일","ageType":"old"},{"rank":7,"title":"제목7","words":"3400","images":"11","views":"3900","age":"9일","ageType":"new"},{"rank":8,"title":"제목8","words":"2600","images":"7","views":"3500","age":"34일","ageType":"old"},{"rank":9,"title":"제목9","words":"1800","images":"5","views":"3100","age":"56일","ageType":"old"},{"rank":10,"title":"제목10","words":"2100","images":"6","views":"2900","age":"14일","ageType":"new"},{"rank":11,"title":"제목11","words":"2900","images":"8","views":"2700","age":"78일","ageType":"old"},{"rank":12,"title":"제목12","words":"1600","images":"4","views":"2500","age":"6일","ageType":"new"},{"rank":13,"title":"제목13","words":"2400","images":"7","views":"2300","age":"43일","ageType":"old"},{"rank":14,"title":"제목14","words":"3200","images":"10","views":"2100","age":"21일","ageType":"new"},{"rank":15,"title":"제목15","words":"1900","images":"5","views":"1900","age":"65일","ageType":"old"},{"rank":16,"title":"제목16","words":"2700","images":"8","views":"1800","age":"11일","ageType":"new"},{"rank":17,"title":"제목17","words":"2000","images":"6","views":"1600","age":"52일","ageType":"old"},{"rank":18,"title":"제목18","words":"1500","images":"4","views":"1400","age":"33일","ageType":"old"},{"rank":19,"title":"제목19","words":"2300","images":"7","views":"1200","age":"8일","ageType":"new"},{"rank":20,"title":"제목20","words":"2800","images":"9","views":"1100","age":"76일","ageType":"old"}],"pattern":"상위 블로그 패턴 3문장.","avgWords":"2350","avgImages":"6.8","newRatio":"40%"}';
-    const raw=await callGroqWithRetry(p_top20,"Korean Naver blog expert. Reply ONLY pure JSON.",3000);
-    const d=sj(raw);
-    const rc=r=>r===1?'r1':r===2?'r2':r===3?'r3':'';
-    const hl=t=>t.replace(new RegExp(escapedTk,'g'),`<span class="kh">${tk}</span>`);
-    document.getElementById('top20Body').innerHTML=`
-      <div class="top20-stats"><div class="kd-mc"><div class="kd-mc-lbl">평균 글자수</div><div class="kd-mc-val" style="color:var(--blue)">${d.avgWords}</div></div><div class="kd-mc"><div class="kd-mc-lbl">평균 이미지</div><div class="kd-mc-val" style="color:var(--orange)">${d.avgImages}장</div></div><div class="kd-mc"><div class="kd-mc-lbl">신규글 비율</div><div class="kd-mc-val" style="color:var(--green)">${d.newRatio}</div></div></div>
-      <div class="top20-pattern"><div class="top20-pattern-title">📊 공통 패턴</div><div class="top20-pattern-text">${d.pattern}</div></div>
-      <div class="top20-header"><div>순위</div><div>제목</div><div style="text-align:center">글자수</div><div style="text-align:center">이미지</div><div style="text-align:center">조회수</div><div style="text-align:center">글나이</div></div>
-      <div class="top20-list">${(d.blogs||[]).map(b=>`<div class="top20-row"><div class="t20-rank ${rc(b.rank)}">${b.rank}</div><div class="t20-title">${hl(b.title)}</div><div class="t20-words">${b.words}자</div><div class="t20-imgs">📷${b.images}</div><div class="t20-views">${b.views}</div><div class="t20-age"><span class="age-badge ${b.ageType==='new'?'age-new':'age-old'}">${b.age}</span></div></div>`).join('')}</div>`;
-  }catch(e){document.getElementById('top20Body').innerHTML=`<div style="padding:18px;color:var(--red);">오류: ${e.message}</div>`;}
-}
 
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 function closeModalOverlay(e,id){if(e.target.classList.contains('modal-overlay'))closeModal(id);}
