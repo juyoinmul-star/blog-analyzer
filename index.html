@@ -423,7 +423,6 @@ header{background:var(--white);border-bottom:1px solid var(--border);padding:0 2
 
   <div class="metrics" id="metricsGrid"></div>
 
-  <!-- 비교 결과 (비교 모드일 때만) -->
   <div class="card" style="margin-bottom:11px;display:none;" id="compareCard">
     <div class="card-head"><div class="card-title">📊 키워드 비교 분석</div></div>
     <div class="card-body" id="compareBody"></div>
@@ -589,7 +588,7 @@ function saveKeys(){
   NK.customerId=document.getElementById('naverCustomer').value.trim();
   const ok=NK.apiKey&&NK.secret&&NK.customerId;
   document.getElementById('naverDot').classList.toggle('on',ok);
-  if(ok){localStorage.setItem('nk',JSON.stringify(NK));closeKeyPanel();alert('✅ 저장되었습니다!');}
+  if(ok){localStorage.setItem('nk',JSON.stringify(NK));closeKeyPanel();alert('저장되었습니다!');}
   else alert('3가지 모두 입력해주세요.');
 }
 (function(){try{const s=localStorage.getItem('nk');if(s){NK=JSON.parse(s);if(NK.apiKey){document.getElementById('naverApiKey').value=NK.apiKey;document.getElementById('naverSecret').value=NK.secret;document.getElementById('naverCustomer').value=NK.customerId;document.getElementById('naverDot').classList.add('on');}}}catch(e){}})();
@@ -609,7 +608,7 @@ async function callGroqWithRetry(prompt,sys,maxTok=2000,retries=3){
     try{return await callGroq(prompt,sys,maxTok);}
     catch(e){
       if(e.message.includes('Rate limit')&&i<retries-1){
-        const w=(i+1)*9000;setSt(`Rate limit 대기 ${Math.round(w/1000)}초...`);await sleep(w);
+        const w=(i+1)*9000;setSt('Rate limit 대기 '+Math.round(w/1000)+'초...');await sleep(w);
       } else throw e;
     }
   }
@@ -623,14 +622,17 @@ async function callGroq(prompt,sys,maxTok=2000){
   if(!res.ok){const e=await res.json().catch(()=>{});throw new Error(e?.error?.message||'Groq API 오류');}
   const d=await res.json();return d.choices?.[0]?.message?.content||'';
 }
+
+// ── JSON 파싱 (수정됨: 정규식 오류 제거) ──
 function sj(raw){
   const c=raw.replace(/```json|```/gi,'').trim();
   const si=c.indexOf('{'), ei=c.lastIndexOf('}');
   if(si===-1||ei===-1) throw new Error('JSON 파싱 실패');
-  try{ return JSON.parse(c.slice(si,ei+1)); }
-  catch(e){
-    // 제어문자 제거 후 재시도
-    const fixed=c.slice(si,ei+1).replace(/[ -]/g,' ');
+  try{
+    return JSON.parse(c.slice(si,ei+1));
+  } catch(e){
+    // 제어문자 및 비ASCII 특수문자 제거 후 재시도
+    const fixed=c.slice(si,ei+1).replace(/[\u0000-\u001F\u007F]/g,' ');
     try{ return JSON.parse(fixed); }
     catch(e2){ throw new Error('JSON 파싱 실패: '+e2.message); }
   }
@@ -665,15 +667,15 @@ async function runCompare(){
           const vol=r?parseInt((r.monthlyTotal||'0').replace(/,/g,'')):0;
           const pct=maxVol>0?Math.round(vol/maxVol*100):0;
           const isWinner=vol===maxVol&&maxVol>0;
-          const comp=r?r.competition:'—';
-          const score=comp==='낮음'?'⭐⭐⭐':comp==='보통'?'⭐⭐':'⭐';
+          const comp=r?r.competition:'없음';
+          const score=comp==='낮음'?'★★★':comp==='보통'?'★★':'★';
           return `<tr class="${isWinner?'cmp-winner':''}">
             <td class="cmp-kw">${kw}${isWinner?' 🏆':''}</td>
-            <td><strong>${r?r.monthlyTotal:'—'}</strong></td>
-            <td>${r?r.monthlyPc:'—'}</td>
-            <td>${r?r.monthlyMobile:'—'}</td>
+            <td><strong>${r?r.monthlyTotal:'없음'}</strong></td>
+            <td>${r?r.monthlyPc:'없음'}</td>
+            <td>${r?r.monthlyMobile:'없음'}</td>
             <td><span class="tag ${comp==='낮음'?'tag-g':comp==='높음'?'tag-r':'tag-o'}">${comp}</span></td>
-            <td>${r?r.relatedKeywords.length+'개':'—'}</td>
+            <td>${r?r.relatedKeywords.length+'개':'없음'}</td>
             <td class="cmp-bar-cell"><div class="cmp-mini-bar" style="width:${pct}%"></div><span style="font-size:10px;color:var(--dim)">${score}</span></td>
           </tr>`;
         }).join('')}</tbody>
@@ -694,8 +696,8 @@ async function go(){
     setStep(2);
     setSt('AI 전략 분석 중...');setStep(3);
     const hasReal=!!naverData&&!naverData.error;
-    const realInfo=hasReal?`실제 데이터: PC ${naverData.monthlyPc}, 모바일 ${naverData.monthlyMobile}, 경쟁도 ${naverData.competition}, 연관키워드 ${naverData.relatedKeywords?.length||0}개`:'(AI 추정)';
-    const sys1=`Korean Naver blog SEO expert. Reply ONLY pure JSON, no markdown.`;
+    const realInfo=hasReal?'실제 데이터: PC '+naverData.monthlyPc+', 모바일 '+naverData.monthlyMobile+', 경쟁도 '+naverData.competition+', 연관키워드 '+(naverData.relatedKeywords?.length||0)+'개':'(AI 추정)';
+    const sys1='Korean Naver blog SEO expert. Reply ONLY pure JSON, no markdown.';
     const sat=hasReal?Math.round((parseInt(naverData?.monthlyMobile?.replace(/,/g,'')||0)/1000*10))+'%':'AI추정';
     const p1='키워드 "'+kw+'". '+realInfo+'. JSON:{'
       +'"summary":"한줄요약30자이내",'
@@ -722,7 +724,7 @@ async function go(){
     setStep(5);setSt('타겟·SNS 분석 중...');
     await sleep(5000);
     const p5='키워드 "'+kw+'". JSON:{"intentAnalysis":{"issue":35,"info":80,"commercial":45,"issueDesc":"이슈성 설명","infoDesc":"정보성 설명","commDesc":"상업성 설명","summary":"키워드 성격 1문장"},"demographic":{"maleRatio":45,"ageGroups":[{"age":"10대","pct":5},{"age":"20대","pct":25},{"age":"30대","pct":35},{"age":"40대","pct":25},{"age":"50대+","pct":10}],"summary":"독자층 특성 1문장"},"snsInsta":"인스타캡션 이모지포함 해시태그10개 150자"}';
-    const raw5=await callGroqWithRetry(p5,`Korean SNS marketing expert. Reply ONLY pure JSON, no markdown.`,1200);
+    const raw5=await callGroqWithRetry(p5,'Korean SNS marketing expert. Reply ONLY pure JSON, no markdown.',1200);
     const d5=sj(raw5);
     if(hasReal)d1.naverReal=naverData;
     D={...d1,titles:d2.titles,blogDraft,intentAnalysis:d5.intentAnalysis,demographic:d5.demographic,snsInsta:d5.snsInsta,kw,hasReal};
@@ -740,9 +742,9 @@ function render(d){
   document.getElementById('rDiff').textContent='난이도: '+(d.difficulty||'보통');
 
   const nr=d.naverReal;
-  const pcSearch=nr?nr.monthlyPc:(d.monthlySearch||'—');
-  const mobileSearch=nr?nr.monthlyMobile:'—';
-  const totalSearch=nr?nr.monthlyTotal:(d.monthlySearch||'—');
+  const pcSearch=nr?nr.monthlyPc:(d.monthlySearch||'없음');
+  const mobileSearch=nr?nr.monthlyMobile:'없음';
+  const totalSearch=nr?nr.monthlyTotal:(d.monthlySearch||'없음');
   const compTxt=nr?nr.competition:(d.competition||'보통');
   const compScore=compTxt==='낮음'?25:compTxt==='높음'?85:55;
   const compColor=compScore>70?'red':compScore>40?'orange':'green';
@@ -750,8 +752,8 @@ function render(d){
     <div class="mc green"><div class="mc-label">월 PC검색 <span class="real-tag">${nr?'실제':'AI'}</span></div><div class="mc-val green">${pcSearch}</div><div class="mc-sub">PC 기준</div>${nr?`<div class="device-split"><div class="device-item"><div class="device-lbl">모바일</div><div class="device-val" style="color:var(--blue);font-size:13px;">${mobileSearch}</div></div><div class="device-item"><div class="device-lbl">합계</div><div class="device-val" style="font-size:13px;">${totalSearch}</div></div></div>`:''}</div>
     <div class="mc ${compColor}"><div class="mc-label">경쟁도 <span class="real-tag">${nr?'실제':'AI'}</span></div><div class="mc-val ${compColor}">${compTxt}</div><div class="gauge"><div class="gauge-fill" style="width:${compScore}%;background:var(--${compColor})"></div></div><div class="mc-sub" style="margin-top:4px;">포화도 ${d.saturation}</div></div>
     <div class="mc blue"><div class="mc-label">CPC <span class="ai-tag">AI</span></div><div class="mc-val blue">${d.avgCpc||'420원'}</div><div class="mc-sub">광고 클릭 비용</div></div>
-    <div class="mc gold"><div class="mc-label">상위글 평균 유지기간 <span class="ai-tag">AI</span></div><div class="mc-val gold">${d.topAge||'—'}</div><div class="mc-sub">노출 유지 기간</div></div>
-    <div class="mc orange"><div class="mc-label">연관 키워드 <span class="real-tag">${nr?'실제':'AI'}</span></div><div class="mc-val orange">${nr?nr.relatedKeywords.length+'개':(d.relatedKws?.length||'—')+'개'}</div><div class="mc-sub">수집된 연관 키워드</div></div>`;
+    <div class="mc gold"><div class="mc-label">상위글 평균 유지기간 <span class="ai-tag">AI</span></div><div class="mc-val gold">${d.topAge||'없음'}</div><div class="mc-sub">노출 유지 기간</div></div>
+    <div class="mc orange"><div class="mc-label">연관 키워드 <span class="real-tag">${nr?'실제':'AI'}</span></div><div class="mc-val orange">${nr?nr.relatedKeywords.length+'개':(d.relatedKws?.length||'없음')+'개'}</div><div class="mc-sub">수집된 연관 키워드</div></div>`;
 
   const gkws=d.goldKeywords||[];
   document.getElementById('goldList').innerHTML=gkws.map((k,i)=>`
@@ -765,15 +767,15 @@ function render(d){
     </div>`).join('');
   document.getElementById('top20BtnWrap').innerHTML='<button class="top20-btn" onclick="openTop20()">🏆 현재 키워드 상위노출 블로그 TOP 20 보기</button>';
 
-  const rels=nr?nr.relatedKeywords:(d.relatedKws||[]).map(k=>({word:k.word,vol:k.vol,comp:k.comp||'—'}));
+  const rels=nr?nr.relatedKeywords:(d.relatedKws||[]).map(k=>({word:k.word,vol:k.vol,comp:k.comp||'없음'}));
   document.getElementById('relCnt').textContent=rels.length+'개';
   document.getElementById('relList').innerHTML=rels.slice(0,20).map(k=>{
-    const w=(k.word||'').replace(/'/g,"\\'"),v=String(k.vol||'—'),c=String(k.comp||'—');
+    const w=(k.word||'').replace(/'/g,"\\'"),v=String(k.vol||'없음'),c=String(k.comp||'없음');
     return '<div class="rkw" onclick="openKwDetail(\''+w+'\',\''+v+'\',\''+c+'\')">'+k.word+'<span class="rkw-vol">'+k.vol+'</span></div>';
   }).join('');
 
   const ex=d.exposure||{};
-  document.getElementById('expGrid').innerHTML=[['최적 글자수',ex.optWords,'권장 범위'],['이미지 수',ex.images,'직접 촬영 권장'],['태그 수',ex.tags,'상위 노출 필수'],['상위 유지',ex.period,'꾸준한 유입'],['발행 주기',ex.updateFreq,'알고리즘']].map(([l,v,s])=>`<div class="exp-item"><div class="exp-label">${l}</div><div class="exp-val">${v||'—'}</div><div class="exp-sub">${s}</div></div>`).join('');
+  document.getElementById('expGrid').innerHTML=[['최적 글자수',ex.optWords,'권장 범위'],['이미지 수',ex.images,'직접 촬영 권장'],['태그 수',ex.tags,'상위 노출 필수'],['상위 유지',ex.period,'꾸준한 유입'],['발행 주기',ex.updateFreq,'알고리즘']].map(([l,v,s])=>`<div class="exp-item"><div class="exp-label">${l}</div><div class="exp-val">${v||'없음'}</div><div class="exp-sub">${s}</div></div>`).join('');
 
   const clrMap={must:'background:var(--greenBg);color:var(--green2)',high:'background:var(--blueBg);color:var(--blue)',mid:'background:var(--border);color:var(--muted)'};
   document.getElementById('checkList').innerHTML=(d.checklist||[]).map(c=>`<div class="chk-item"><span class="chk-icon">${c.icon}</span><span class="chk-txt">${c.text}</span><span class="chk-score" style="${clrMap[c.level]||clrMap.mid}">${c.score}</span></div>`).join('');
@@ -789,13 +791,11 @@ function render(d){
   document.getElementById('trendDesc').textContent=d.trendDesc||'';
   document.getElementById('trendChart').innerHTML=`<svg viewBox="0 0 300 66" width="100%" height="65"><defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#03c75a" stop-opacity=".2"/><stop offset="100%" stop-color="#03c75a" stop-opacity="0"/></linearGradient></defs><polygon fill="url(#tg)" points="10,66 ${pts} ${(trendArr.length-1)/(trendArr.length-1)*280+10},66"/><polyline fill="none" stroke="#03c75a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/></svg>`;
 
-  // 키워드 성격
   const intentData=d.intentAnalysis||{};
   const intents=[{label:'이슈성',score:intentData.issue||0,color:'var(--red)',desc:intentData.issueDesc||''},{label:'정보성',score:intentData.info||0,color:'var(--blue)',desc:intentData.infoDesc||''},{label:'상업성',score:intentData.commercial||0,color:'var(--orange)',desc:intentData.commDesc||''}];
   document.getElementById('intentGrid').innerHTML=intents.map(it=>`<div class="intent-item"><div class="intent-label">${it.label}</div><div class="intent-score" style="color:${it.color}">${it.score}점</div><div class="intent-bar"><div class="intent-bar-fill" style="width:${it.score}%;background:${it.color}"></div></div><div class="intent-desc">${it.desc}</div></div>`).join('');
   document.getElementById('intentDesc').textContent=intentData.summary||'';
 
-  // 타겟 독자
   const demo=d.demographic||{};
   const genderM=demo.maleRatio||50,genderF=100-genderM;
   const ages=demo.ageGroups||[{age:'10대',pct:5},{age:'20대',pct:20},{age:'30대',pct:35},{age:'40대',pct:25},{age:'50대+',pct:15}];
@@ -810,7 +810,6 @@ function render(d){
     </div></div>`;
   document.getElementById('demoDesc').textContent=demo.summary||'';
 
-  // 제목 목록
   document.getElementById('titleList').innerHTML=(d.titles||[]).map((t,i)=>`<div class="title-item" onclick="cpTitle(this)"><span class="ti-num">${i+1}</span><span class="ti-text">${t}</span><span class="ti-copy">클릭 복사</span></div>`).join('');
   document.getElementById('wo-full').textContent=d.blogDraft||'생성 실패';
   document.getElementById('wo-hook').textContent='재생성 버튼을 눌러주세요';
@@ -825,7 +824,7 @@ function render(d){
 
 // ── 유틸 ──
 function swW(type,el){document.querySelectorAll('.wtab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.wc').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('wc-'+type).classList.add('active');}
-function cpTitle(el){const t=el.querySelector('.ti-text').textContent;navigator.clipboard.writeText(t).then(()=>{const c=el.querySelector('.ti-copy');c.textContent='✅ 복사됨';setTimeout(()=>c.textContent='클릭 복사',1500);});}
+function cpTitle(el){const t=el.querySelector('.ti-text').textContent;navigator.clipboard.writeText(t).then(()=>{const c=el.querySelector('.ti-copy');c.textContent='복사됨';setTimeout(()=>c.textContent='클릭 복사',1500);});}
 function cpWrite(type){navigator.clipboard.writeText(document.getElementById('wo-'+type).textContent).then(()=>alert('복사되었습니다!'));}
 async function regenW(type){
   if(!curKw)return;const el=document.getElementById('wo-'+type);el.textContent='생성 중...';
@@ -834,7 +833,7 @@ async function regenW(type){
     outline:'키워드"'+curKw+'" 블로그 소제목 구조. 도입→소제목5~6개→마무리. 텍스트만.',
     full:'키워드"'+curKw+'" 블로그 포스팅. 2000~2500자. 도입→소제목4개→마무리. 텍스트만.'
   };
-  try{const r=await callGroq(pm[type],`당신은 네이버 블로그 SEO 전문 작가입니다.`,2000);el.textContent=r;}catch(e){el.textContent='오류: '+e.message;}
+  try{const r=await callGroq(pm[type],'당신은 네이버 블로그 SEO 전문 작가입니다.',2000);el.textContent=r;}catch(e){el.textContent='오류: '+e.message;}
 }
 
 // ── SNS ──
@@ -871,27 +870,27 @@ async function openKwDetail(kw,vol,comp){
   document.getElementById('kwModal').classList.add('show');
   document.getElementById('modalBody').innerHTML='<div class="modal-spin-wrap"><div class="modal-spin"></div><span style="font-size:12px;color:var(--muted)">분석 중...</span></div>';
   const nr=await callNaver(kw);
-  const realVol=(nr&&nr.monthlyTotal&&nr.monthlyTotal!=='0')?nr.monthlyTotal:(vol||'—');
-  const realComp=(nr&&nr.competition&&nr.competition!=='—')?nr.competition:(comp||'—');
+  const realVol=(nr&&nr.monthlyTotal&&nr.monthlyTotal!=='0')?nr.monthlyTotal:(vol||'없음');
+  const realComp=(nr&&nr.competition&&nr.competition!=='없음')?nr.competition:(comp||'없음');
   try{
-    const p_kw='"'+kw+'" 검색량='+realVol+', 경쟁도='+realComp+'. JSON:{"monthlySearch":"'+realVol+'","pcSearch":"'+(nr?.monthlyPc||'—')+'","mobileSearch":"'+(nr?.monthlyMobile||'—')+'","competition":"'+realComp+'","difficulty":"쉬움","opportunity":78,"saturation":"120%","cpc":"350원","strategy":"상위노출 전략 3문장.","targetUser":"타겟 유저 2문장.","bestTitles":["제목1","제목2","제목3","제목4","제목5"],"tags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8"],"warning":"주의사항 2문장."}';
+    const p_kw='"'+kw+'" 검색량='+realVol+', 경쟁도='+realComp+'. JSON:{"monthlySearch":"'+realVol+'","pcSearch":"'+(nr?.monthlyPc||'없음')+'","mobileSearch":"'+(nr?.monthlyMobile||'없음')+'","competition":"'+realComp+'","difficulty":"쉬움","opportunity":78,"saturation":"120%","cpc":"350원","strategy":"상위노출 전략 3문장.","targetUser":"타겟 유저 2문장.","bestTitles":["제목1","제목2","제목3","제목4","제목5"],"tags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8"],"warning":"주의사항 2문장."}';
     const raw=await callGroqWithRetry(p_kw,"Korean Naver blog SEO expert. Reply ONLY pure JSON.",1000);
     const d=sj(raw);
-    const ms=d.monthlySearch||realVol||'—',pcs=d.pcSearch||(nr?.monthlyPc)||'—',mbs=d.mobileSearch||(nr?.monthlyMobile)||'—';
+    const ms=d.monthlySearch||realVol||'없음',pcs=d.pcSearch||(nr?.monthlyPc)||'없음',mbs=d.mobileSearch||(nr?.monthlyMobile)||'없음';
     const opp=typeof d.opportunity==='number'?d.opportunity:50;
     const oc=opp>=70?'var(--green)':opp>=40?'var(--orange)':'var(--red)';
     document.getElementById('modalBody').innerHTML=`
       <div class="kd-metrics">
         <div class="kd-mc"><div class="kd-mc-lbl">월 검색량 <span class="real-tag">${nr?'실제':'AI'}</span></div><div class="kd-mc-val" style="color:var(--green)">${ms}</div><div class="kd-mc-sub">PC ${pcs} / 모바일 ${mbs}</div></div>
-        <div class="kd-mc"><div class="kd-mc-lbl">기회도</div><div class="kd-mc-val" style="color:${oc}">${opp}점</div><div class="kd-mc-sub">${d.difficulty||'—'}</div></div>
-        <div class="kd-mc"><div class="kd-mc-lbl">평균 CPC</div><div class="kd-mc-val" style="color:var(--blue)">${d.cpc||'—'}</div><div class="kd-mc-sub">포화도 ${d.saturation||'—'}</div></div>
+        <div class="kd-mc"><div class="kd-mc-lbl">기회도</div><div class="kd-mc-val" style="color:${oc}">${opp}점</div><div class="kd-mc-sub">${d.difficulty||'없음'}</div></div>
+        <div class="kd-mc"><div class="kd-mc-lbl">평균 CPC</div><div class="kd-mc-val" style="color:var(--blue)">${d.cpc||'없음'}</div><div class="kd-mc-sub">포화도 ${d.saturation||'없음'}</div></div>
       </div>
       <div class="kd-section"><div class="kd-sec-title">📌 상위노출 전략</div><div class="kd-text">${(d.strategy||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div></div>
-      <div class="kd-section"><div class="kd-sec-title">👥 타겟 유저</div><div class="kd-text">${d.targetUser||'—'}</div></div>
+      <div class="kd-section"><div class="kd-sec-title">👥 타겟 유저</div><div class="kd-text">${d.targetUser||'없음'}</div></div>
       <div class="kd-section"><div class="kd-sec-title">✍️ 추천 제목 <span style="font-size:10px;color:var(--dim)">(클릭 복사)</span></div>
         <div class="kd-titles">${(d.bestTitles||[]).map((t,i)=>`<div class="kd-title-item" onclick="cpRaw2('${t.replace(/'/g,"\\'")}',this)"><span style="color:var(--dim);font-size:10px;min-width:14px">${i+1}</span><span style="flex:1">${t}</span><span style="color:var(--dim);font-size:10px">복사</span></div>`).join('')}</div></div>
       <div class="kd-section"><div class="kd-sec-title">🏷️ 추천 태그</div><div class="kd-tags">${(d.tags||[]).map(t=>`<span class="kd-tag">${t}</span>`).join('')}</div></div>
-      <div class="kd-section"><div class="kd-sec-title">⚠️ 주의사항</div><div class="kd-text">${d.warning||'—'}</div></div>
+      <div class="kd-section"><div class="kd-sec-title">⚠️ 주의사항</div><div class="kd-text">${d.warning||'없음'}</div></div>
       <div style="display:flex;gap:7px;margin-top:4px;">
         <button class="wbtn primary" style="flex:1" onclick="sk('${kw}');closeModal('kwModal');">이 키워드로 분석</button>
         <button class="wbtn" style="flex:1" onclick="openTop20('${kw}')">상위 블로그 TOP 20</button>
@@ -907,11 +906,12 @@ async function openTop20(kw){
   closeModal('kwModal');
   document.getElementById('top20Body').innerHTML='<div class="modal-spin-wrap"><div class="modal-spin"></div><span style="font-size:12px;color:var(--muted)">분석 중...</span></div>';
   try{
+    const escapedTk=tk.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     const p_top20='"'+tk+'" 상위노출 블로그 TOP20. JSON:{"blogs":[{"rank":1,"title":"실제같은제목(키워드포함)","words":"2450","images":"7","views":"12400","age":"23일","ageType":"new"},{"rank":2,"title":"제목2","words":"3100","images":"9","views":"8200","age":"45일","ageType":"old"},{"rank":3,"title":"제목3","words":"1900","images":"5","views":"6700","age":"12일","ageType":"new"},{"rank":4,"title":"제목4","words":"2800","images":"8","views":"5100","age":"67일","ageType":"old"},{"rank":5,"title":"제목5","words":"2200","images":"6","views":"4800","age":"18일","ageType":"new"},{"rank":6,"title":"제목6","words":"1700","images":"4","views":"4200","age":"89일","ageType":"old"},{"rank":7,"title":"제목7","words":"3400","images":"11","views":"3900","age":"9일","ageType":"new"},{"rank":8,"title":"제목8","words":"2600","images":"7","views":"3500","age":"34일","ageType":"old"},{"rank":9,"title":"제목9","words":"1800","images":"5","views":"3100","age":"56일","ageType":"old"},{"rank":10,"title":"제목10","words":"2100","images":"6","views":"2900","age":"14일","ageType":"new"},{"rank":11,"title":"제목11","words":"2900","images":"8","views":"2700","age":"78일","ageType":"old"},{"rank":12,"title":"제목12","words":"1600","images":"4","views":"2500","age":"6일","ageType":"new"},{"rank":13,"title":"제목13","words":"2400","images":"7","views":"2300","age":"43일","ageType":"old"},{"rank":14,"title":"제목14","words":"3200","images":"10","views":"2100","age":"21일","ageType":"new"},{"rank":15,"title":"제목15","words":"1900","images":"5","views":"1900","age":"65일","ageType":"old"},{"rank":16,"title":"제목16","words":"2700","images":"8","views":"1800","age":"11일","ageType":"new"},{"rank":17,"title":"제목17","words":"2000","images":"6","views":"1600","age":"52일","ageType":"old"},{"rank":18,"title":"제목18","words":"1500","images":"4","views":"1400","age":"33일","ageType":"old"},{"rank":19,"title":"제목19","words":"2300","images":"7","views":"1200","age":"8일","ageType":"new"},{"rank":20,"title":"제목20","words":"2800","images":"9","views":"1100","age":"76일","ageType":"old"}],"pattern":"상위 블로그 패턴 3문장.","avgWords":"2350","avgImages":"6.8","newRatio":"40%"}';
     const raw=await callGroqWithRetry(p_top20,"Korean Naver blog expert. Reply ONLY pure JSON.",3000);
     const d=sj(raw);
     const rc=r=>r===1?'r1':r===2?'r2':r===3?'r3':'';
-    const hl=t=>t.replace(new RegExp(tk.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'),`<span class="kh">${tk}</span>`);
+    const hl=t=>t.replace(new RegExp(escapedTk,'g'),`<span class="kh">${tk}</span>`);
     document.getElementById('top20Body').innerHTML=`
       <div class="top20-stats"><div class="kd-mc"><div class="kd-mc-lbl">평균 글자수</div><div class="kd-mc-val" style="color:var(--blue)">${d.avgWords}</div></div><div class="kd-mc"><div class="kd-mc-lbl">평균 이미지</div><div class="kd-mc-val" style="color:var(--orange)">${d.avgImages}장</div></div><div class="kd-mc"><div class="kd-mc-lbl">신규글 비율</div><div class="kd-mc-val" style="color:var(--green)">${d.newRatio}</div></div></div>
       <div class="top20-pattern"><div class="top20-pattern-title">📊 공통 패턴</div><div class="top20-pattern-text">${d.pattern}</div></div>
@@ -922,7 +922,7 @@ async function openTop20(kw){
 
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 function closeModalOverlay(e,id){if(e.target.classList.contains('modal-overlay'))closeModal(id);}
-function cpRaw2(txt,el){navigator.clipboard.writeText(txt).then(()=>{const s=el.querySelector('span:last-child');if(s){s.textContent='✅';setTimeout(()=>s.textContent='복사',1500);}});}
+function cpRaw2(txt,el){navigator.clipboard.writeText(txt).then(()=>{const s=el.querySelector('span:last-child');if(s){s.textContent='복사됨';setTimeout(()=>s.textContent='복사',1500);}});}
 </script>
 </body>
 </html>
