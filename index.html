@@ -623,7 +623,18 @@ async function callGroq(prompt,sys,maxTok=2000){
   if(!res.ok){const e=await res.json().catch(()=>{});throw new Error(e?.error?.message||'Groq API 오류');}
   const d=await res.json();return d.choices?.[0]?.message?.content||'';
 }
-function sj(raw){const c=raw.replace(/```json|```/gi,'').trim();const si=c.indexOf('{'),ei=c.lastIndexOf('}');if(si===-1||ei===-1)throw new Error('JSON 파싱 실패');return JSON.parse(c.slice(si,ei+1));}
+function sj(raw){
+  const c=raw.replace(/```json|```/gi,'').trim();
+  const si=c.indexOf('{'), ei=c.lastIndexOf('}');
+  if(si===-1||ei===-1) throw new Error('JSON 파싱 실패');
+  try{ return JSON.parse(c.slice(si,ei+1)); }
+  catch(e){
+    // 제어문자 제거 후 재시도
+    const fixed=c.slice(si,ei+1).replace(/[ -]/g,' ');
+    try{ return JSON.parse(fixed); }
+    catch(e2){ throw new Error('JSON 파싱 실패: '+e2.message); }
+  }
+}
 
 // ── 네이버 API ──
 async function callNaver(keyword){
@@ -704,13 +715,14 @@ async function go(){
     setStep(4);setSt('콘텐츠 생성 중...');
     await sleep(5000);
     const [raw2,blogDraft]=await Promise.all([
-      callGroqWithRetry(`키워드"${kw}" 네이버 블로그 SEO 제목 10개. JSON:{"titles":["제목1","제목2","제목3","제목4","제목5","제목6","제목7","제목8","제목9","제목10"]}`,`Korean SEO expert. Reply ONLY pure JSON.`,800),
-      callGroqWithRetry(`키워드 "${kw}" 블로그 포스팅. 2000~2500자. 도입(후킹)→소제목4개→마무리. 텍스트만.`,`당신은 네이버 블로그 SEO 전문 작가입니다.`,2500)
+      callGroqWithRetry('키워드"'+kw+'" 네이버블로그 SEO제목 10개. JSON:{"titles":["제목1","제목2","제목3","제목4","제목5","제목6","제목7","제목8","제목9","제목10"]}',"Korean SEO expert. Reply ONLY pure JSON.",800),
+      callGroqWithRetry('키워드 "'+kw+'" 블로그 포스팅. 2000~2500자. 도입(후킹)→소제목4개→마무리. 텍스트만.','당신은 네이버 블로그 SEO 전문 작가입니다.',2500)
     ]);
     const d2=sj(raw2);
     setStep(5);setSt('타겟·SNS 분석 중...');
     await sleep(5000);
-    const raw5=await callGroqWithRetry(`키워드 "${kw}". JSON:{"intentAnalysis":{"issue":35,"info":80,"commercial":45,"issueDesc":"이슈성 설명","infoDesc":"정보성 설명","commDesc":"상업성 설명","summary":"키워드 성격 요약"},"demographic":{"maleRatio":45,"ageGroups":[{"age":"10대","pct":5},{"age":"20대","pct":25},{"age":"30대","pct":35},{"age":"40대","pct":25},{"age":"50대+","pct":10}],"summary":"주요 독자층 특성"},"snsInsta":"인스타 캡션 이모지풍부 해시태그10개 150자내외"}`,`Korean SNS marketing expert. Reply ONLY pure JSON, no markdown.`,1200);
+    const p5='키워드 "'+kw+'". JSON:{"intentAnalysis":{"issue":35,"info":80,"commercial":45,"issueDesc":"이슈성 설명","infoDesc":"정보성 설명","commDesc":"상업성 설명","summary":"키워드 성격 1문장"},"demographic":{"maleRatio":45,"ageGroups":[{"age":"10대","pct":5},{"age":"20대","pct":25},{"age":"30대","pct":35},{"age":"40대","pct":25},{"age":"50대+","pct":10}],"summary":"독자층 특성 1문장"},"snsInsta":"인스타캡션 이모지포함 해시태그10개 150자"}';
+    const raw5=await callGroqWithRetry(p5,`Korean SNS marketing expert. Reply ONLY pure JSON, no markdown.`,1200);
     const d5=sj(raw5);
     if(hasReal)d1.naverReal=naverData;
     D={...d1,titles:d2.titles,blogDraft,intentAnalysis:d5.intentAnalysis,demographic:d5.demographic,snsInsta:d5.snsInsta,kw,hasReal};
@@ -817,7 +829,11 @@ function cpTitle(el){const t=el.querySelector('.ti-text').textContent;navigator.
 function cpWrite(type){navigator.clipboard.writeText(document.getElementById('wo-'+type).textContent).then(()=>alert('복사되었습니다!'));}
 async function regenW(type){
   if(!curKw)return;const el=document.getElementById('wo-'+type);el.textContent='생성 중...';
-  const pm={hook:`키워드"${curKw}" 블로그 도입부 후킹 3버전. 각 100~150자. 번호매겨서.`,outline:`키워드"${curKw}" 블로그 소제목 구조. 도입→소제목5~6개→마무리. 텍스트만.`,full:`키워드"${curKw}" 블로그 포스팅. 2000~2500자. 도입→소제목4개→마무리. 텍스트만.`};
+  const pm={
+    hook:'키워드"'+curKw+'" 블로그 도입부 후킹 3버전. 각 100~150자. 번호매겨서.',
+    outline:'키워드"'+curKw+'" 블로그 소제목 구조. 도입→소제목5~6개→마무리. 텍스트만.',
+    full:'키워드"'+curKw+'" 블로그 포스팅. 2000~2500자. 도입→소제목4개→마무리. 텍스트만.'
+  };
   try{const r=await callGroq(pm[type],`당신은 네이버 블로그 SEO 전문 작가입니다.`,2000);el.textContent=r;}catch(e){el.textContent='오류: '+e.message;}
 }
 
@@ -826,9 +842,9 @@ function swSNS(type,el){document.querySelectorAll('.sns-tab').forEach(t=>t.class
 async function regenSNS(type){
   if(!curKw)return;const el=document.getElementById('sno-'+type);el.textContent='생성 중...';
   const prompts={
-    insta:`키워드"${curKw}" 인스타그램 캡션. 이모지 풍부하게, 해시태그 10개, 150자 내외. 텍스트만.`,
-    reels:`키워드"${curKw}" 인스타 릴스 스크립트. 훅(3초)→본문(30초)→CTA(5초). 구어체. 텍스트만.`,
-    threads:`키워드"${curKw}" 스레드 연속 포스팅 5개. 각 140자 내외. 흐름있게. 이모지 포함. 텍스트만.`
+    insta:'키워드"'+curKw+'" 인스타그램 캡션. 이모지 풍부하게, 해시태그 10개, 150자 내외. 텍스트만.',
+    reels:'키워드"'+curKw+'" 인스타 릴스 스크립트. 훅(3초)→본문(30초)→CTA(5초). 구어체. 텍스트만.',
+    threads:'키워드"'+curKw+'" 스레드 연속 포스팅 5개. 각 140자 내외. 흐름있게. 이모지 포함. 텍스트만.'
   };
   try{const r=await callGroqWithRetry(prompts[type],'당신은 SNS 마케팅 전문가입니다.',700);el.textContent=r;}catch(e){el.textContent='오류: '+e.message;}
 }
@@ -840,7 +856,8 @@ async function checkTitleSEO(){
   const result=document.getElementById('titleCheckResult');
   result.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0;">분석 중...</div>';
   try{
-    const raw=await callGroqWithRetry(`제목:"${title}" 키워드:"${curKw||'미지정'}". JSON:{"score":78,"grade":"B+","checks":[{"pass":true,"item":"키워드 앞쪽 배치","desc":""},{"pass":false,"item":"적정 길이 25~35자","desc":""},{"pass":true,"item":"숫자·구체성","desc":""},{"pass":false,"item":"클릭 유도 표현","desc":""},{"pass":true,"item":"중복 키워드 없음","desc":""}],"suggestion":"개선 제목 제안","reason":"이유 1문장"}`,`Korean Naver blog SEO expert. Reply ONLY pure JSON.`,600);
+    const p_seo='제목:"'+title+'" 키워드:"'+(curKw||'미지정')+'". JSON:{"score":78,"grade":"B+","checks":[{"pass":true,"item":"키워드 앞쪽 배치","desc":""},{"pass":false,"item":"적정 길이 25~35자","desc":""},{"pass":true,"item":"숫자 구체성","desc":""},{"pass":false,"item":"클릭 유도 표현","desc":""},{"pass":true,"item":"중복 키워드 없음","desc":""}],"suggestion":"개선 제목 제안","reason":"이유 1문장"}';
+    const raw=await callGroqWithRetry(p_seo,"Korean Naver blog SEO expert. Reply ONLY pure JSON.",600);
     const d=sj(raw);
     const sc=d.score>=80?'var(--green)':d.score>=60?'var(--orange)':'var(--red)';
     const sb=d.score>=80?'var(--greenBg)':d.score>=60?'var(--orangeBg)':'var(--redBg)';
@@ -857,7 +874,8 @@ async function openKwDetail(kw,vol,comp){
   const realVol=(nr&&nr.monthlyTotal&&nr.monthlyTotal!=='0')?nr.monthlyTotal:(vol||'—');
   const realComp=(nr&&nr.competition&&nr.competition!=='—')?nr.competition:(comp||'—');
   try{
-    const raw=await callGroqWithRetry(`"${kw}" 검색량=${realVol}, 경쟁도=${realComp}. JSON:{"monthlySearch":"${realVol}","pcSearch":"${nr?.monthlyPc||'—'}","mobileSearch":"${nr?.monthlyMobile||'—'}","competition":"${realComp}","difficulty":"쉬움","opportunity":78,"saturation":"120%","cpc":"350원","strategy":"상위노출 전략 3문장.","targetUser":"타겟 유저 2문장.","bestTitles":["제목1","제목2","제목3","제목4","제목5"],"tags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8"],"warning":"주의사항 2문장."}`,`Korean Naver blog SEO expert. Reply ONLY pure JSON.`,1000);
+    const p_kw='"'+kw+'" 검색량='+realVol+', 경쟁도='+realComp+'. JSON:{"monthlySearch":"'+realVol+'","pcSearch":"'+(nr?.monthlyPc||'—')+'","mobileSearch":"'+(nr?.monthlyMobile||'—')+'","competition":"'+realComp+'","difficulty":"쉬움","opportunity":78,"saturation":"120%","cpc":"350원","strategy":"상위노출 전략 3문장.","targetUser":"타겟 유저 2문장.","bestTitles":["제목1","제목2","제목3","제목4","제목5"],"tags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8"],"warning":"주의사항 2문장."}';
+    const raw=await callGroqWithRetry(p_kw,"Korean Naver blog SEO expert. Reply ONLY pure JSON.",1000);
     const d=sj(raw);
     const ms=d.monthlySearch||realVol||'—',pcs=d.pcSearch||(nr?.monthlyPc)||'—',mbs=d.mobileSearch||(nr?.monthlyMobile)||'—';
     const opp=typeof d.opportunity==='number'?d.opportunity:50;
@@ -889,7 +907,8 @@ async function openTop20(kw){
   closeModal('kwModal');
   document.getElementById('top20Body').innerHTML='<div class="modal-spin-wrap"><div class="modal-spin"></div><span style="font-size:12px;color:var(--muted)">분석 중...</span></div>';
   try{
-    const raw=await callGroqWithRetry(`"${tk}" 상위노출 블로그 TOP20. JSON:{"blogs":[{"rank":1,"title":"제목(키워드포함)","words":"2,450","images":"7","views":"12,400","age":"23일","ageType":"new"},{"rank":2,"title":"제목2","words":"3,100","images":"9","views":"8,200","age":"45일","ageType":"old"},{"rank":3,"title":"제목3","words":"1,900","images":"5","views":"6,700","age":"12일","ageType":"new"},{"rank":4,"title":"제목4","words":"2,800","images":"8","views":"5,100","age":"67일","ageType":"old"},{"rank":5,"title":"제목5","words":"2,200","images":"6","views":"4,800","age":"18일","ageType":"new"},{"rank":6,"title":"제목6","words":"1,700","images":"4","views":"4,200","age":"89일","ageType":"old"},{"rank":7,"title":"제목7","words":"3,400","images":"11","views":"3,900","age":"9일","ageType":"new"},{"rank":8,"title":"제목8","words":"2,600","images":"7","views":"3,500","age":"34일","ageType":"old"},{"rank":9,"title":"제목9","words":"1,800","images":"5","views":"3,100","age":"56일","ageType":"old"},{"rank":10,"title":"제목10","words":"2,100","images":"6","views":"2,900","age":"14일","ageType":"new"},{"rank":11,"title":"제목11","words":"2,900","images":"8","views":"2,700","age":"78일","ageType":"old"},{"rank":12,"title":"제목12","words":"1,600","images":"4","views":"2,500","age":"6일","ageType":"new"},{"rank":13,"title":"제목13","words":"2,400","images":"7","views":"2,300","age":"43일","ageType":"old"},{"rank":14,"title":"제목14","words":"3,200","images":"10","views":"2,100","age":"21일","ageType":"new"},{"rank":15,"title":"제목15","words":"1,900","images":"5","views":"1,900","age":"65일","ageType":"old"},{"rank":16,"title":"제목16","words":"2,700","images":"8","views":"1,800","age":"11일","ageType":"new"},{"rank":17,"title":"제목17","words":"2,000","images":"6","views":"1,600","age":"52일","ageType":"old"},{"rank":18,"title":"제목18","words":"1,500","images":"4","views":"1,400","age":"33일","ageType":"old"},{"rank":19,"title":"제목19","words":"2,300","images":"7","views":"1,200","age":"8일","ageType":"new"},{"rank":20,"title":"제목20","words":"2,800","images":"9","views":"1,100","age":"76일","ageType":"old"}],"pattern":"상위 블로그 패턴 3문장.","avgWords":"2,350","avgImages":"6.8","newRatio":"40%"}`,`Korean Naver blog expert. Reply ONLY pure JSON.`,3000);
+    const p_top20='"'+tk+'" 상위노출 블로그 TOP20. JSON:{"blogs":[{"rank":1,"title":"실제같은제목(키워드포함)","words":"2450","images":"7","views":"12400","age":"23일","ageType":"new"},{"rank":2,"title":"제목2","words":"3100","images":"9","views":"8200","age":"45일","ageType":"old"},{"rank":3,"title":"제목3","words":"1900","images":"5","views":"6700","age":"12일","ageType":"new"},{"rank":4,"title":"제목4","words":"2800","images":"8","views":"5100","age":"67일","ageType":"old"},{"rank":5,"title":"제목5","words":"2200","images":"6","views":"4800","age":"18일","ageType":"new"},{"rank":6,"title":"제목6","words":"1700","images":"4","views":"4200","age":"89일","ageType":"old"},{"rank":7,"title":"제목7","words":"3400","images":"11","views":"3900","age":"9일","ageType":"new"},{"rank":8,"title":"제목8","words":"2600","images":"7","views":"3500","age":"34일","ageType":"old"},{"rank":9,"title":"제목9","words":"1800","images":"5","views":"3100","age":"56일","ageType":"old"},{"rank":10,"title":"제목10","words":"2100","images":"6","views":"2900","age":"14일","ageType":"new"},{"rank":11,"title":"제목11","words":"2900","images":"8","views":"2700","age":"78일","ageType":"old"},{"rank":12,"title":"제목12","words":"1600","images":"4","views":"2500","age":"6일","ageType":"new"},{"rank":13,"title":"제목13","words":"2400","images":"7","views":"2300","age":"43일","ageType":"old"},{"rank":14,"title":"제목14","words":"3200","images":"10","views":"2100","age":"21일","ageType":"new"},{"rank":15,"title":"제목15","words":"1900","images":"5","views":"1900","age":"65일","ageType":"old"},{"rank":16,"title":"제목16","words":"2700","images":"8","views":"1800","age":"11일","ageType":"new"},{"rank":17,"title":"제목17","words":"2000","images":"6","views":"1600","age":"52일","ageType":"old"},{"rank":18,"title":"제목18","words":"1500","images":"4","views":"1400","age":"33일","ageType":"old"},{"rank":19,"title":"제목19","words":"2300","images":"7","views":"1200","age":"8일","ageType":"new"},{"rank":20,"title":"제목20","words":"2800","images":"9","views":"1100","age":"76일","ageType":"old"}],"pattern":"상위 블로그 패턴 3문장.","avgWords":"2350","avgImages":"6.8","newRatio":"40%"}';
+    const raw=await callGroqWithRetry(p_top20,"Korean Naver blog expert. Reply ONLY pure JSON.",3000);
     const d=sj(raw);
     const rc=r=>r===1?'r1':r===2?'r2':r===3?'r3':'';
     const hl=t=>t.replace(new RegExp(tk.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'),`<span class="kh">${tk}</span>`);
