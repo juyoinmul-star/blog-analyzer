@@ -814,8 +814,7 @@ async function go(){
 
     // STEP 2: 1번째 AI 호출 — 전략+황금키워드+제목+타이밍+타겟+SNS 한번에
     setSt('AI 종합 분석 중...');setStep(3);
-    const p1='키워드"'+kw+'" '+realInfo+'. 아래 JSON 형식 그대로 값만 채워서 반환. ONLY JSON:
-'
+    const p1='키워드"'+kw+'" '+realInfo+'. ONLY JSON: '
       +'{"summary":"30자이내","difficulty":"쉬움","diffColor":"green","saturation":"'+sat+'",'
       +'"topAge":"평균30일",'
       +'"goldKeywords":[{"word":"키워드","vol":"2400","comp":"낮음","score":88,"isGold":true},{"word":"키워드2","vol":"1800","comp":"낮음","score":84,"isGold":true},{"word":"키워드3","vol":"3200","comp":"보통","score":71,"isGold":false},{"word":"키워드4","vol":"1100","comp":"낮음","score":79,"isGold":true},{"word":"키워드5","vol":"800","comp":"낮음","score":74,"isGold":false},{"word":"키워드6","vol":"4100","comp":"높음","score":58,"isGold":false},{"word":"키워드7","vol":"950","comp":"낮음","score":72,"isGold":false}],'
